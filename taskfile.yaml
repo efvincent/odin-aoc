@@ -1,0 +1,64 @@
+version: 3
+
+tasks:
+  default:
+    cmds:
+      - task: run_debug
+
+  test:
+    cmds:
+      - odin test src/aoc -out=build/aoc-test -o:none -debug -strict-style
+    aliases:
+      - t
+    method: none
+    silent: true
+    sources:
+      - ./src/aoc/**/*.odin
+
+  build_debug:
+    aliases:
+      - b
+    cmds:
+      - odin build src/aoc -out=build/aoc-debug -o:none -debug -strict-style
+    silent: true
+    sources:
+      - ./src/aoc/**/*.odin
+    generates:
+      - ./build/aoc-debug
+
+  build_release:
+    aliases:
+      - release
+      - rel
+    cmds:
+      - odin build src/aoc -out=build/aoc -o:aggressive -vet -strict-style -warnings-as-errors
+    silent: true
+    sources:
+      - ./src/aoc/**/*.odin
+    generates:
+      - ./build/aoc
+
+  run_debug:
+    aliases:
+      - r
+      - run
+    deps:
+      - build_debug
+    silent: true
+    cmds:
+      - build/aoc-debug
+    method: none
+
+  run_release:
+    aliases:
+      - rr
+      - run-rel
+      - run-release
+    deps:
+      - build_release
+    silent: true
+    cmds:
+      - build/aoc
+    method: none
+
+interval: 250ms
