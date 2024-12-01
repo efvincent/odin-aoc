@@ -7,36 +7,36 @@ tasks:
 
   test:
     cmds:
-      - odin test src/aoc -out=build/aoc-test -o:none -debug -strict-style
+      - odin test src/aoc24 -out=build/aoc24-test -o:none -debug -strict-style
     aliases:
       - t
     method: none
     silent: true
     sources:
-      - ./src/aoc/**/*.odin
+      - ./src/aoc24/**/*.odin
 
   build_debug:
     aliases:
       - b
     cmds:
-      - odin build src/aoc -out=build/aoc-debug -o:none -debug -strict-style
+      - odin build src/aoc24 -out=build/aoc24-debug -o:none -debug -strict-style
     silent: true
     sources:
-      - ./src/aoc/**/*.odin
+      - ./src/aoc24/**/*.odin
     generates:
-      - ./build/aoc-debug
+      - ./build/aoc24-debug
 
   build_release:
     aliases:
       - release
       - rel
     cmds:
-      - odin build src/aoc -out=build/aoc -o:aggressive -vet -strict-style -warnings-as-errors
+      - odin build src/aoc24 -out=build/aoc24 -o:aggressive -vet -strict-style
     silent: true
     sources:
-      - ./src/aoc/**/*.odin
+      - ./src/aoc24/**/*.odin
     generates:
-      - ./build/aoc
+      - ./build/aoc24
 
   run_debug:
     aliases:
@@ -46,7 +46,7 @@ tasks:
       - build_debug
     silent: true
     cmds:
-      - build/aoc-debug
+      - build/aoc24-debug
     method: none
 
   run_release:
@@ -58,7 +58,7 @@ tasks:
       - build_release
     silent: true
     cmds:
-      - build/aoc
+      - build/aoc24
     method: none
 
 interval: 250ms
