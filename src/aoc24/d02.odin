@@ -8,17 +8,8 @@ import conv "core:strconv"
 import "core:strings"
 import "core:testing"
 
-D02_PUZ_EX :: `7 6 4 2 1
-1 2 7 8 9
-9 7 6 2 1
-1 3 2 4 5
-8 6 4 4 1
-1 3 6 7 9`
-
-
 // this approach uses ~ 9kb statically allocated regardless of
 // puzzle size. This means can only handle max 1000 line puzzles
-
 @(private = "file")
 Line :: struct {
 	count:   u8,

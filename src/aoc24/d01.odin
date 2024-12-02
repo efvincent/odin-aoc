@@ -7,14 +7,6 @@ import conv "core:strconv"
 import "core:strings"
 import "core:testing"
 
-D01_PUZ_EX :: `3   4
-4   3
-2   5
-1   3
-3   9
-3   3`
-
-
 @(test)
 d01_part01_test :: proc(t: ^testing.T) {
 	p1 := solve_d01(.p1, D01_PUZ_EX)
