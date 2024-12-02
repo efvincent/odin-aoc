@@ -10,14 +10,12 @@ import "core:testing"
 @(test)
 d01_part01_test :: proc(t: ^testing.T) {
 	p1 := solve_d01(.p1, D01_PUZ_EX)
-	// defer delete(p1)
 	testing.expect_value(t, p1, "11")
 }
 
 @(test)
 d01_part02_test :: proc(t: ^testing.T) {
 	p2 := solve_d01(.p2, D01_PUZ_EX)
-	// defer delete(p2)
 	testing.expect_value(t, p2, "31")
 }
 

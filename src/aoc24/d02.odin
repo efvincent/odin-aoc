@@ -22,15 +22,17 @@ Lines :: struct {
 	lines: [1000]Line,
 }
 
-//@(test)
+@(test)
 d02_test_parse :: proc(t: ^testing.T) {
-	ans := parse(D02_PUZ)
+	ans := parse(D02_PUZ_EX)
+
+	testing.expect_value(t, ans.count, 6)
 	for idx := 0; idx < ans.count; idx += 1 {
-		log.debugf("idx:%d : %v", idx, ans.lines[idx])
+		testing.expect_value(t, ans.lines[idx].count, 5)
 	}
 }
 
-//@(test)
+@(test)
 d02_part01_test :: proc(t: ^testing.T) {
 	p1 := solve_d02(.p1, D02_PUZ_EX)
 	defer delete(p1)
@@ -65,23 +67,12 @@ parse :: proc(data: string) -> Lines {
 
 	raw_lines := strings.split_lines(data)
 
-	// technically we don't need to delete the 
-	// memory allocated on the temporary allocator
-	// since it will all be freed at once at end
-	// of scope. The arena might have to grow however,
-	// and that might cost more than deleting as we
-	// go along. More research needed.
-	defer {
-		delete(raw_lines)
-	}
-
 	lines := Lines {
 		count = len(raw_lines),
 	}
 
 	for raw_line, rl_idx in raw_lines {
 		raw_reports := strings.split(raw_line, " ")
-		defer delete(raw_reports)
 		lines.lines[rl_idx].count = u8(len(raw_reports))
 		for raw_report, rr_idx in raw_reports {
 			report := u8(conv.atoi(raw_report))
