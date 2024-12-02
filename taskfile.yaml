@@ -7,36 +7,67 @@ tasks:
 
   test:
     cmds:
+      - odin test src/aoc -out=build/aoc-test -o:none -debug -strict-style
+      - odin test src/aoc23 -out=build/aoc23-test -o:none -debug -strict-style
       - odin test src/aoc24 -out=build/aoc24-test -o:none -debug -strict-style
+      - odin test src/util -out=build/util-test -o:none -debug -strict-style
+    deps:
+      - build_debug
     aliases:
       - t
     method: none
-    silent: true
+    silent: false
     sources:
-      - ./src/aoc24/**/*.odin
+      - ./src/aoc/**/*.odin
+
+  test24:
+    cmds:
+      - odin test src/aoc24 -out=build/aoc24-test -o:none -debug -strict-style
+    deps:
+      - build_debug
+    aliases:
+      - t24
+    method: none
+    silent: false
+    sources:
+      - ./src/aoc/**/*.odin
+  
+  test23:
+    cmds:
+      - odin test src/aoc23 -out=build/aoc23-test -o:none -debug -strict-style
+    deps:
+      - build_debug
+    aliases:
+      - t23
+    method: none
+    silent: false
+    sources:
+      - ./src/aoc/**/*.odin
 
   build_debug:
     aliases:
       - b
     cmds:
-      - odin build src/aoc24 -out=build/aoc24-debug -o:none -debug -strict-style
-    silent: true
+      - odin build src/aoc -out=build/aoc-debug -o:none -debug -strict-style
+    silent: false
     sources:
-      - ./src/aoc24/**/*.odin
+      - ./src/aoc/**/*.odin
     generates:
-      - ./build/aoc24-debug
+      - ./build/aoc-debug
+    method: none
 
   build_release:
     aliases:
       - release
       - rel
     cmds:
-      - odin build src/aoc24 -out=build/aoc24 -o:aggressive -vet -strict-style
-    silent: true
+      - odin build src/aoc -out=build/aoc -o:aggressive -strict-style
+    silent: false
     sources:
-      - ./src/aoc24/**/*.odin
+      - ./src/aoc/**/*.odin
     generates:
-      - ./build/aoc24
+      - ./build/aoc
+    method: none
 
   run_debug:
     aliases:
@@ -46,7 +77,7 @@ tasks:
       - build_debug
     silent: true
     cmds:
-      - build/aoc24-debug
+      - build/aoc-debug
     method: none
 
   run_release:
@@ -58,7 +89,7 @@ tasks:
       - build_release
     silent: true
     cmds:
-      - build/aoc24
+      - build/aoc
     method: none
 
 interval: 250ms
