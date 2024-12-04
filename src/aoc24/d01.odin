@@ -52,7 +52,6 @@ solve2 :: proc(data: string) -> string {
 
 	left, right := parse(data)
 	in_right := make(map[int]int)
-	counts := make(map[int]int)
 
 	for n in right {
 		in_right[n] = in_right[n] + 1

@@ -1,9 +1,6 @@
 package aoc24
 
 import "../util"
-import "core:log"
-import "core:math"
-import "core:slice"
 import conv "core:strconv"
 import "core:strings"
 import "core:testing"
