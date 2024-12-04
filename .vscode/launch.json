@@ -5,7 +5,7 @@
       "name": "Launch",
       "type": "cppdbg",
       "request": "launch",
-      "program": "${workspaceRoot}/build/aoc",
+      "program": "${workspaceRoot}/build/aoc-debug",
       "args": [],
       "stopAtEntry": false,
       "cwd": "${workspaceFolder}",

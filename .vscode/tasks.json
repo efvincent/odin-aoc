@@ -4,7 +4,7 @@
     {
       "label": "Build",
       "type": "shell",
-      "command": "odin build src/aoc -out:build/aoc -debug -show-timings -vet -strict-style -warnings-as-errors",
+      "command": "odin build src/aoc -out:build/aoc-debug -debug -show-timings -strict-style -warnings-as-errors",
       "group": {
         "kind": "build",
         "isDefault": true
