@@ -15,18 +15,6 @@ Puz :: struct {
 	maxy: int,
 }
 
-@(test)
-D04_test_parse :: proc(t: ^testing.T) {
-}
-
-@(test)
-D04_part01_test :: proc(t: ^testing.T) {
-}
-
-@(test)
-D04_part02_test :: proc(t: ^testing.T) {
-}
-
 solve_D04 :: proc(part: util.Part, data: string) -> string {
 	switch part {
 	case .p1:
@@ -52,10 +40,8 @@ get :: proc(puz: Puz, x: int, y: int) -> u8 {
 	return puz.data[x + y * puz.maxx + y]
 }
 
-// be nice to use a generator to find the Xs
-xmas_dirs :: [?][]int{{1, 0}, {-1, 0}, {0, 1}, {0, -1}, {1, 1}, {1, -1}, {-1, 1}, {-1, -1}}
-
 look_for_xmas :: proc(puz: Puz, lookfor: []u8, x, y: int) -> int {
+	xmas_dirs :: [?][]int{{1, 0}, {-1, 0}, {0, 1}, {0, -1}, {1, 1}, {1, -1}, {-1, 1}, {-1, -1}}
 	count := 0
 	for dir in xmas_dirs {
 		if has_xmas(puz, lookfor, x, y, dir[0], dir[1]) {
@@ -81,7 +67,6 @@ solve1 :: proc(data: string) -> string {
 }
 
 has_xmas :: proc(puz: Puz, comp: []u8, x: int, y: int, xdir: int, ydir: int) -> bool {
-	// start at x,y, going in xdir,ydir, comp each of comp
 	curx := x
 	cury := y
 	for c in comp {
@@ -99,7 +84,10 @@ solve2 :: proc(data: string) -> string {
 	for y in 0 ..< puz.maxy {
 		for x in 0 ..< puz.maxx {
 			if get(puz, x, y) == 'A' {
-				total += look_for_x(puz, x, y)
+				//fmt.printfln("A:(%v,%v)", x, y)
+				if look_for_x(puz, x, y) {
+					total += 1
+				}
 			}
 		}
 	}
@@ -107,9 +95,35 @@ solve2 :: proc(data: string) -> string {
 	return util.to_str(total)
 }
 
-x_diag :: [?][]int{{-1, -1}, {1, -1}, {1, 1}, {1, -1}}
-x_straight :: [?][]int{{0, -1}, {1, 0}, {0, 1}, {-1, 0}}
-look_for_x :: proc(puz: Puz, x, y: int) -> int {
-	n := 0
-	return n
+check_each :: proc(puz: Puz, orients: [][]int, x, y: int) -> bool {
+
+	p1, p2, p3, p4: []int
+
+	for orientation in 1 ..= 1 {
+		for mod in 0 ..= 3 {
+			p1 = orients[(mod + 0) % 4]
+			p2 = orients[(mod + 1) % 4]
+			p3 = orients[(mod + 2) % 4]
+			p4 = orients[(mod + 3) % 4]
+
+			if get(puz, p1[0] + x, p1[1] + y) == 'M' &&
+			   get(puz, p2[0] + x, p2[1] + y) == 'M' &&
+			   get(puz, p3[0] + x, p3[1] + y) == 'S' &&
+			   get(puz, p4[0] + x, p4[1] + y) == 'S' {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+look_for_x :: proc(puz: Puz, x, y: int) -> bool {
+	TOP_RIGHT :: []int{1, -1}
+	BOT_RIGHT :: []int{1, 1}
+	BOT_LEFT :: []int{-1, 1}
+	TOP_LEFT :: []int{-1, -1}
+
+	diagonals := [][]int{TOP_RIGHT, BOT_RIGHT, BOT_LEFT, TOP_LEFT}
+
+	return check_each(puz, diagonals, x, y)
 }
