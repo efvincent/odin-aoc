@@ -21,7 +21,7 @@ solve_d05 :: proc(part: util.Part, data: string) -> string {
 }
 
 Puz :: struct {
-	rules: map[int]map[int]bool,
+	rules: map[int][dynamic]int,
 	jobs:  [dynamic][dynamic]int,
 }
 
@@ -35,19 +35,19 @@ parse :: proc(data: string) -> Puz {
 	raw_rules := strings.split_lines(parts[0])
 	raw_jobs := strings.split_lines(parts[1])
 
-	rules := make(map[int]map[int]bool)
+	rules := make(map[int][dynamic]int)
 	for raw_rule in raw_rules {
 		rule_parts := strings.split(raw_rule, "|")
 		key := strconv.atoi(rule_parts[0])
 		value := strconv.atoi(rule_parts[1])
 		if key in rules {
-			m := (rules[key])
-			fmt.printfln("inserting rule for page %v - value %v", key, value)
-			m[value] = true
+			value_list := rules[key]
+			append(&value_list, value)
+			rules[key] = value_list
 		} else {
-			values := make(map[int]bool)
-			values[value] = true
-			rules[key] = values
+			new_value_list := make([dynamic]int)
+			append(&new_value_list, value)
+			rules[key] = new_value_list
 		}
 	}
 
@@ -63,7 +63,6 @@ parse :: proc(data: string) -> Puz {
 	}
 
 	puz := Puz{rules, jobs}
-	fmt.println(puz)
 	return puz
 }
 
@@ -83,19 +82,18 @@ solve1 :: proc(data: string) -> string {
 			for prev_idx := 0; prev_idx < idx; prev_idx += 1 {
 				// are any previous pages in the list of pages that must come after current?
 				prev_page := job[prev_idx]
-				if prev_page in page_rule {
-					// found a previous page in the rules, this job is a nope
-					valid = false
-					continue
+				for rule_page in page_rule {
+					if prev_page == rule_page {
+						// found a previous page in the rules, this job is a nope
+						valid = false
+						break
+					}
 				}
 			}
 		}
 		if valid {
 			mid := job[len(job) / 2]
 			tot += mid
-			fmt.printfln("job %v valid mid:%v  : %v", job_idx, mid, job)
-		} else {
-			fmt.printfln("job %v INVALID : %v", job_idx, job)
 		}
 	}
 	return util.to_str(tot)
