@@ -14,6 +14,10 @@ day_05 :: proc() {
 	data := aoc24.D05_PUZ
 	ans1 := aoc24.solve_d05(.p1, data)
 	ans2 := aoc24.solve_d05(.p2, data)
+	defer {
+		delete(ans1)
+		delete(ans2)
+	}
 	fmt.printfln("Answers to day 5: %s, %s", ans1, ans2)
 }
 
