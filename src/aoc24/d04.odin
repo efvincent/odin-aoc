@@ -9,13 +9,14 @@ import conv "core:strconv"
 import "core:strings"
 import "core:testing"
 
+@(private = "file")
 Puz :: struct {
 	data: []u8,
 	maxx: int,
 	maxy: int,
 }
 
-solve_D04 :: proc(part: util.Part, data: string) -> string {
+solve_d04 :: proc(part: util.Part, data: string) -> string {
 	switch part {
 	case .p1:
 		return solve1(data)
@@ -34,12 +35,14 @@ parse :: proc(data: string) -> Puz {
 	return Puz{data = transmute([]u8)data, maxx = span, maxy = (len(data) / span)}
 }
 
+@(private = "file")
 get :: proc(puz: Puz, x: int, y: int) -> u8 {
 	if x < 0 || x >= puz.maxx do return 0
 	if y < 0 || y >= puz.maxx do return 0
 	return puz.data[x + y * puz.maxx + y]
 }
 
+@(private = "file")
 look_for_xmas :: proc(puz: Puz, lookfor: []u8, x, y: int) -> int {
 	xmas_dirs :: [?][]int{{1, 0}, {-1, 0}, {0, 1}, {0, -1}, {1, 1}, {1, -1}, {-1, 1}, {-1, -1}}
 	count := 0
@@ -66,6 +69,7 @@ solve1 :: proc(data: string) -> string {
 	return util.to_str(total)
 }
 
+@(private = "file")
 has_xmas :: proc(puz: Puz, comp: []u8, x: int, y: int, xdir: int, ydir: int) -> bool {
 	curx := x
 	cury := y
@@ -95,21 +99,20 @@ solve2 :: proc(data: string) -> string {
 	return util.to_str(total)
 }
 
-check_each :: proc(puz: Puz, orients: [][]int, x, y: int) -> bool {
-
-	p1, p2, p3, p4: []int
-
+@(private = "file")
+check_each :: proc(puz: Puz, locations: [][]int, x, y: int) -> bool {
+	loc1, loc2, loc3, loc4: []int
 	for orientation in 1 ..= 1 {
 		for mod in 0 ..= 3 {
-			p1 = orients[(mod + 0) % 4]
-			p2 = orients[(mod + 1) % 4]
-			p3 = orients[(mod + 2) % 4]
-			p4 = orients[(mod + 3) % 4]
+			loc1 = locations[(mod + 0) % 4]
+			loc2 = locations[(mod + 1) % 4]
+			loc3 = locations[(mod + 2) % 4]
+			loc4 = locations[(mod + 3) % 4]
 
-			if get(puz, p1[0] + x, p1[1] + y) == 'M' &&
-			   get(puz, p2[0] + x, p2[1] + y) == 'M' &&
-			   get(puz, p3[0] + x, p3[1] + y) == 'S' &&
-			   get(puz, p4[0] + x, p4[1] + y) == 'S' {
+			if get(puz, loc1[0] + x, loc1[1] + y) == 'M' &&
+			   get(puz, loc2[0] + x, loc2[1] + y) == 'M' &&
+			   get(puz, loc3[0] + x, loc3[1] + y) == 'S' &&
+			   get(puz, loc4[0] + x, loc4[1] + y) == 'S' {
 				return true
 			}
 		}
@@ -117,6 +120,7 @@ check_each :: proc(puz: Puz, orients: [][]int, x, y: int) -> bool {
 	return false
 }
 
+@(private = "file")
 look_for_x :: proc(puz: Puz, x, y: int) -> bool {
 	TOP_RIGHT :: []int{1, -1}
 	BOT_RIGHT :: []int{1, 1}
