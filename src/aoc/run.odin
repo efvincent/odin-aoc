@@ -9,8 +9,15 @@ import "core:os"
 run :: proc() {
 	//day_01()
 	//day_02()
-	day_03()
+	day_04()
 	//repl()
+}
+
+day_04 :: proc() {
+	data := aoc24.D04_PUZ
+	ans1 := aoc24.solve_D04(.p1, data)
+	ans2 := aoc24.solve_D04(.p2, data)
+	fmt.printfln("Answers to day 4: %s, %s", ans1, ans2)
 }
 
 day_01 :: proc() {
