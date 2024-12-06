@@ -68,7 +68,59 @@ parse :: proc(data: string) -> Puz {
 
 @(private = "file")
 solve2 :: proc(data: string) -> string {
-	return ""
+	puz := parse(data)
+	tot := 0
+	for job, job_idx in puz.jobs {
+		if !is_job_valid(puz, job_idx) {
+			fix_job(&puz, job_idx)
+			fixed_job := puz.jobs[job_idx]
+			mid := job[len(job) / 2]
+			tot += mid
+		}
+	}
+	return util.to_str(tot)
+}
+
+@(private = "file")
+fix_job :: proc(puz: ^Puz, job_idx: int) {
+	job := puz.jobs[job_idx]
+	recheck := false
+	for !is_job_valid(puz^, job_idx) {
+		recheck = false
+		for job_page_idx := 0; job_page_idx < len(job) && !recheck; job_page_idx += 1 {
+			job_page := job[job_page_idx]
+			page_rule := puz.rules[job_page]
+			for prev_page_idx := 0; prev_page_idx < job_page_idx && !recheck; prev_page_idx += 1 {
+				prev_page := job[prev_page_idx]
+				for rule_page in page_rule {
+					if prev_page == rule_page {
+						tmp := job_page
+						job[job_page_idx] = prev_page
+						job[prev_page_idx] = tmp
+						recheck = true
+						break
+					}
+				}
+			}
+		}
+	}
+}
+
+@(private = "file")
+is_job_valid :: proc(puz: Puz, job_idx: int) -> bool {
+	job := puz.jobs[job_idx]
+	for page, idx in job {
+		page_rule := puz.rules[page]
+		for prev_idx := 0; prev_idx < idx; prev_idx += 1 {
+			prev_page := job[prev_idx]
+			for rule_page in page_rule {
+				if prev_page == rule_page {
+					return false
+				}
+			}
+		}
+	}
+	return true
 }
 
 @(private = "file")
@@ -76,22 +128,7 @@ solve1 :: proc(data: string) -> string {
 	puz := parse(data)
 	tot := 0
 	for job, job_idx in puz.jobs {
-		valid := true
-		for page, idx in job {
-			page_rule := puz.rules[page]
-			for prev_idx := 0; prev_idx < idx; prev_idx += 1 {
-				// are any previous pages in the list of pages that must come after current?
-				prev_page := job[prev_idx]
-				for rule_page in page_rule {
-					if prev_page == rule_page {
-						// found a previous page in the rules, this job is a nope
-						valid = false
-						break
-					}
-				}
-			}
-		}
-		if valid {
+		if is_job_valid(puz, job_idx) {
 			mid := job[len(job) / 2]
 			tot += mid
 		}
