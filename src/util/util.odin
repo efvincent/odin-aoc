@@ -10,11 +10,11 @@ Part :: enum {
 	p2,
 }
 
-to_str :: proc(v: any) -> string {
-	sb := strings.Builder{}
+to_str :: proc(v: any, allocator := context.allocator) -> string {
+	sb := strings.builder_make(allocator)
 	defer strings.builder_destroy(&sb)
 	fmt.sbprint(&sb, v)
-	return strings.clone(strings.to_string(sb))
+	return strings.clone(strings.to_string(sb), allocator)
 }
 
 TrackingAllocatorState :: struct {
