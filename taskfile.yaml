@@ -61,7 +61,7 @@ tasks:
       - release
       - rel
     cmds:
-      - odin build src/aoc -out=build/aoc -o:aggressive -strict-style
+      - odin build src/aoc -out=build/aoc -o:aggressive -strict-style -vet
     silent: false
     sources:
       - ./src/aoc/**/*.odin
