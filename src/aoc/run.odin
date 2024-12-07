@@ -12,8 +12,7 @@ run :: proc() {
 
 day_06 :: proc() {
 	data := aoc24.D06_PUZ
-	ans1 := "0"
-	//ans1 := aoc24.solve_d06(.p1, data)
+	ans1 := aoc24.solve_d06(.p1, data)
 	ans2 := aoc24.solve_d06(.p2, data)
 	defer {
 		delete(ans1)

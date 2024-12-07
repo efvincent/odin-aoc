@@ -131,7 +131,8 @@ solve2 :: proc(data: string) -> string {
 	for y := 0; y < puz.maxy; y += 1 {
 		for x := 0; x < puz.maxx; x += 1 {
 			cur_point := Point{x, y}
-			if get(puz, cur_point) == 'X' {
+			cur_value := get(puz, cur_point)
+			if cur_value == 'X' || cur_value == '^' || cur_value == 'O' {
 				append(&path_points, cur_point)
 				put(&puz, cur_point, '.')
 			}
@@ -155,13 +156,7 @@ find_loops :: proc(puz: Puz, path_points: []Point) -> int {
 			maxy         = puz.maxy,
 		}
 		put(&tmp_puz, p, 'O')
-		if walk_route(&tmp_puz, i) == 0 {
-			// this is a loop
-			// fmt.printfln("point %v makes a loop", p)
-			count += 1
-		} else {
-			// not in a loop
-		}
+		if walk_route(&tmp_puz, i, true) == 0 do count += 1
 	}
 	return count
 }
@@ -178,8 +173,13 @@ solve1 :: proc(data: string) -> string {
 	return util.to_str(steps)
 }
 
+hash :: proc(p: Point) -> int {
+	return p.x * 1000 + p.y
+}
+
 @(private = "file")
-walk_route :: proc(puz: ^Puz, i: int = -1) -> int {
+walk_route :: proc(puz: ^Puz, i: int = -1, shortcut_loops: bool = true) -> int {
+
 	steps := 1
 	// make sure we're at the correct starting position
 	puz.cur_pos = puz.starting_pos
@@ -188,53 +188,40 @@ walk_route :: proc(puz: ^Puz, i: int = -1) -> int {
 	// prep the loop checks
 	loop_check := false
 	loop_check_steps: int
-	loop_check_dir: bit_set[Direction]
-	loop_check_dir = {}
+	loop_check_dir := bit_set[Direction]{}
 
-	//fmt.printfln("%v\n", string(puz.data))
+	// as we hit each 'X', record the direction from which it struck.
+	loop_checks := make(map[int](bit_set[Direction]), context.temp_allocator)
+	defer delete(loop_checks)
 
 	for {
 		new_pos, value := move(puz^, puz.cur_pos, puz.cur_dir)
-		if value == 0 {
-			// we've left the map, we're done
-			break
-		}
-		if value == '#' {
+		if value == 0 do break // exited the map
+		if value == '#' || value == 'O' {
 			// hit obstacle, turn right, but we didn't take a step
 			puz.cur_dir = turn_right(puz.cur_dir)
 			continue
 		}
-		if value == 'O' {
-			// we hit a placed obstacle (from part 2), turn right
-			// to see if we're in a loop, record the number of steps to this point, and
-			// note that we're checking for a loop
-			if !loop_check {
-				loop_check = true
-				loop_check_dir = loop_check_dir + bit_set[Direction]{puz.cur_dir}
-				loop_check_steps = steps
-			} else {
-				loop_check_dir = loop_check_dir + bit_set[Direction]{puz.cur_dir}
-				if puz.cur_dir in loop_check_dir && loop_check_steps == steps {
-					// we hit the obstacle going the same direction twice.
-					// we must be in a loop
+		if value == 'X' || value == '#' || value == 'O' {
+			// we've been here before, we can step but don't count it
+			key := hash(new_pos)
+			visited := key in loop_checks
+			if !visited {
+				fresh_bits := bit_set[Direction]{}
+				loop_checks[key] = fresh_bits
+			}
+			bits := loop_checks[key]
+
+			// see if we've visited from this direction
+			if shortcut_loops {
+				if puz.cur_dir in bits {
+					// we're looping
 					return 0
 				} else {
-					log.debugf(
-						"%5v) lcDir:%v, puz_dir:%v, lcSteps:%v, steps:%v",
-						i,
-						loop_check_dir,
-						puz.cur_dir,
-						loop_check_steps,
-						steps,
-					)
-					loop_check_steps = steps
+					bits = bits + bit_set[Direction]{puz.cur_dir}
+					loop_checks[key] = bits
 				}
 			}
-			puz.cur_dir = turn_right(puz.cur_dir)
-			continue
-		}
-		if value == 'X' || value == '^' {
-			// we've been here before, we can step but don't count it
 			puz.cur_pos = new_pos
 			continue
 		}
