@@ -7,7 +7,18 @@ import "core:log"
 import "core:os"
 
 run :: proc() {
-	day_06()
+	day_07()
+}
+
+day_07 :: proc() {
+	data := aoc24.D07_PUZ
+	ans1 := aoc24.solve_d07(.p1, data)
+	ans2 := aoc24.solve_d07(.p2, data)
+	defer {
+		delete(ans1)
+		delete(ans2)
+	}
+	fmt.printfln("Answers to day 7: %s, %s", ans1, ans2)
 }
 
 day_06 :: proc() {
@@ -20,6 +31,7 @@ day_06 :: proc() {
 	}
 	fmt.printfln("Answers to day 6: %s, %s", ans1, ans2)
 }
+
 day_05 :: proc() {
 	data := aoc24.D05_PUZ
 	ans1 := aoc24.solve_d05(.p1, data)
