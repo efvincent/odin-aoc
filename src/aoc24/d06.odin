@@ -191,7 +191,11 @@ walk_route :: proc(puz: ^Puz, i: int = -1, shortcut_loops: bool = true) -> int {
 	loop_check_dir := bit_set[Direction]{}
 
 	// as we hit each 'X', record the direction from which it struck.
-	loop_checks := make(map[int](bit_set[Direction]), context.temp_allocator)
+	loop_checks := make_map(
+		map[int](bit_set[Direction]),
+		(puz.maxx * puz.maxy) / 4,
+		context.temp_allocator,
+	)
 	defer delete(loop_checks)
 
 	for {
