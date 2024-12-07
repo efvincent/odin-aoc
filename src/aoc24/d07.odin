@@ -24,7 +24,6 @@ solve_d07 :: proc(part: util.Part, data: string) -> string {
 		return solve(data, true)
 	}
 	return ""
-
 }
 
 @(private = "file")
@@ -68,6 +67,7 @@ solve :: proc(data: string, check_concat: bool) -> string {
 	return util.to_str(total)
 }
 
+@(private = "file")
 has_solution :: proc(
 	expected: u128,
 	terms: []u128,
