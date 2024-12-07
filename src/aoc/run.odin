@@ -3,8 +3,6 @@ package aoc
 import "../aoc24"
 import "../util"
 import "core:fmt"
-import "core:log"
-import "core:os"
 
 run :: proc() {
 	day_07()

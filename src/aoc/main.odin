@@ -2,7 +2,6 @@ package aoc
 
 import "core:log"
 import "core:mem"
-import "core:time"
 
 TrackingData :: struct {
 	count: int,

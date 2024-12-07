@@ -1,11 +1,7 @@
 package aoc24
 
 import "../util"
-import "core:fmt"
-import "core:log"
 import "core:strconv"
-import "core:strings"
-import "core:testing"
 
 solve_d03 :: proc(part: util.Part, data: string) -> string {
 	switch part {
@@ -97,10 +93,6 @@ check_tokens :: proc(offset: int, tkns: []Token, candidates: []TokenType) -> boo
 
 @(private = "file")
 scan :: proc(tkns: ^[dynamic]Token, scn: ^Scanner) -> bool {
-	prev := Token {
-		type  = .JUNK,
-		start = 0,
-	}
 	for {
 		tkn, ok := scan_token(scn)
 		if !ok do return false
@@ -216,7 +208,7 @@ lexeme_of :: proc(token: Token, scanner: Scanner) -> string {
 @(private = "file")
 solve1 :: proc(data: string) -> string {
 	scn := initScannerFromString(data)
-	tkns, err := make([dynamic]Token, context.temp_allocator)
+	tkns, _ := make([dynamic]Token, context.temp_allocator)
 	defer delete(tkns)
 	scan(&tkns, &scn)
 	ans := interpret(tkns[:], scn, false)
@@ -226,7 +218,7 @@ solve1 :: proc(data: string) -> string {
 @(private = "file")
 solve2 :: proc(data: string) -> string {
 	scn := initScannerFromString(data)
-	tkns, err := make([dynamic]Token, context.temp_allocator)
+	tkns, _ := make([dynamic]Token, context.temp_allocator)
 	defer delete(tkns)
 	scan(&tkns, &scn)
 	ans := interpret(tkns[:], scn, true)

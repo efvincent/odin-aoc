@@ -1,13 +1,8 @@
 package aoc24
 
 import "../util"
-import "core:fmt"
 import "core:log"
-import "core:math"
-import "core:slice"
-import conv "core:strconv"
 import "core:strings"
-import "core:testing"
 
 @(private = "file")
 Puz :: struct {
@@ -93,7 +88,6 @@ parse :: proc(data: ^string) -> Puz {
 	context.allocator = context.temp_allocator
 	defer context.allocator = orig_allocator
 
-	raw_lines := strings.split_lines(data^)
 	span := strings.index(data^, "\n")
 	puz := Puz {
 		data = transmute([]u8)data^,
@@ -126,7 +120,6 @@ solve2 :: proc(data: string) -> string {
 	// get all the points on the walked path not including the starting point
 	path_points := make([dynamic]Point, allocator = context.temp_allocator)
 	defer (delete(path_points))
-	loop_points := make([dynamic]Point, allocator = context.temp_allocator)
 
 	for y := 0; y < puz.maxy; y += 1 {
 		for x := 0; x < puz.maxx; x += 1 {
@@ -184,11 +177,6 @@ walk_route :: proc(puz: ^Puz, i: int = -1, shortcut_loops: bool = true) -> int {
 	// make sure we're at the correct starting position
 	puz.cur_pos = puz.starting_pos
 	puz.cur_dir = .N
-
-	// prep the loop checks
-	loop_check := false
-	loop_check_steps: int
-	loop_check_dir := bit_set[Direction]{}
 
 	// as we hit each 'X', record the direction from which it struck.
 	loop_checks := make_map(

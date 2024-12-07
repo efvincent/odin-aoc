@@ -1,14 +1,8 @@
 package aoc24
 
 import "../util"
-import "core:fmt"
-import "core:log"
-import "core:math"
-import "core:slice"
-import conv "core:strconv"
 import "core:strconv"
 import "core:strings"
-import "core:testing"
 
 solve_d05 :: proc(part: util.Part, data: string) -> string {
 	switch part {
@@ -73,7 +67,6 @@ solve2 :: proc(data: string) -> string {
 	for job, job_idx in puz.jobs {
 		if !is_job_valid(puz, job_idx) {
 			fix_job(&puz, job_idx)
-			fixed_job := puz.jobs[job_idx]
 			mid := job[len(job) / 2]
 			tot += mid
 		}

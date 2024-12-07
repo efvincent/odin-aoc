@@ -1,13 +1,7 @@
 package aoc24
 
 import "../util"
-import "core:fmt"
-import "core:log"
-import "core:math"
-import "core:slice"
-import conv "core:strconv"
 import "core:strings"
-import "core:testing"
 
 @(private = "file")
 Puz :: struct {
@@ -102,19 +96,17 @@ solve2 :: proc(data: string) -> string {
 @(private = "file")
 check_each :: proc(puz: Puz, locations: [][]int, x, y: int) -> bool {
 	loc1, loc2, loc3, loc4: []int
-	for orientation in 1 ..= 1 {
-		for mod in 0 ..= 3 {
-			loc1 = locations[(mod + 0) % 4]
-			loc2 = locations[(mod + 1) % 4]
-			loc3 = locations[(mod + 2) % 4]
-			loc4 = locations[(mod + 3) % 4]
+	for mod in 0 ..= 3 {
+		loc1 = locations[(mod + 0) % 4]
+		loc2 = locations[(mod + 1) % 4]
+		loc3 = locations[(mod + 2) % 4]
+		loc4 = locations[(mod + 3) % 4]
 
-			if get(puz, loc1[0] + x, loc1[1] + y) == 'M' &&
-			   get(puz, loc2[0] + x, loc2[1] + y) == 'M' &&
-			   get(puz, loc3[0] + x, loc3[1] + y) == 'S' &&
-			   get(puz, loc4[0] + x, loc4[1] + y) == 'S' {
-				return true
-			}
+		if get(puz, loc1[0] + x, loc1[1] + y) == 'M' &&
+		   get(puz, loc2[0] + x, loc2[1] + y) == 'M' &&
+		   get(puz, loc3[0] + x, loc3[1] + y) == 'S' &&
+		   get(puz, loc4[0] + x, loc4[1] + y) == 'S' {
+			return true
 		}
 	}
 	return false
