@@ -15,12 +15,14 @@ Point :: struct {
 	y: int,
 }
 
+@(private = "file")
 Ant :: struct {
 	id:   int,
 	freq: rune,
 	loc:  Point,
 }
 
+@(private = "file")
 Puz :: struct {
 	ants:      map[int]Ant,
 	antinodes: map[int]bool,
@@ -28,14 +30,30 @@ Puz :: struct {
 	maxy:      int,
 }
 
+@(private = "file")
+init_puz :: proc() -> Puz {
+	return Puz {
+		ants = make_map(map[int]Ant, allocator = context.temp_allocator),
+		antinodes = make_map(map[int]bool, allocator = context.temp_allocator),
+	}
+}
+
 solve_d08 :: proc(part: util.Part, data: string) -> string {
 	puz := parse(data)
-	print_puz(puz)
 	for _, ant in puz.ants {
 		scan_ant(&puz, ant, part)
 	}
-	print_puz(puz)
-	return util.to_str(len(puz.antinodes))
+	if part == .p1 {
+		return util.to_str(len(puz.antinodes))
+	} else {
+		count := 0
+		for _, ant in puz.ants {
+			if !(hash(ant.loc) in puz.antinodes) {
+				count += 1
+			}
+		}
+		return util.to_str(count + len(puz.antinodes))
+	}
 }
 
 @(private = "file")
@@ -58,10 +76,7 @@ hash :: proc(p: Point) -> int {
 parse :: proc(data: string) -> Puz {
 
 	raw_lines := strings.split_lines(data, context.temp_allocator)
-	puz := Puz {
-		ants      = make(map[int]Ant),
-		antinodes = make(map[int]bool),
-	}
+	puz := init_puz()
 	for raw_line, y_idx in raw_lines {
 		for char, x_idx in raw_line {
 			switch char {
@@ -90,6 +105,7 @@ scan_ant :: proc(puz: ^Puz, ant: Ant, part: util.Part = .p1) {
 	}
 }
 
+@(private = "file")
 antinode_of :: proc(puz: ^Puz, p1: Point, p2: Point, part: util.Part = .p1) {
 	x := math.abs(p1.x - p2.x)
 	y := math.abs(p1.y - p2.y)
@@ -104,35 +120,13 @@ antinode_of :: proc(puz: ^Puz, p1: Point, p2: Point, part: util.Part = .p1) {
 	} else {
 		dy = -1 * y
 	}
+
 	p := Point{p1.x + dx, p1.y + dy}
-
 	ok := put(puz, p)
-	fmt.printfln("(%v,%v) - %v", p.x, p.y, ok)
-	if part == .p2 && ok {
-		antinode_of(puz, p1, p, part)
-		antinode_of(puz, p, p1, part)
-	}
-}
 
-@(private = "file")
-print_puz :: proc(puz: Puz) {
-	for y in 0 ..= puz.maxy {
-		for x in 0 ..= puz.maxx {
-			p := Point{x, y}
-			id := hash(p)
-			_, found := puz.antinodes[id]
-			if found {
-				fmt.print("#")
-			} else {
-				ant, found_ant := puz.ants[id]
-				if found_ant {
-					fmt.print(ant.freq)
-				} else {
-					fmt.print(".")
-				}
-			}
-		}
-		fmt.println()
+	for part == .p2 && ok {
+		p.x += dx
+		p.y += dy
+		ok = put(puz, p)
 	}
-	fmt.println("\n")
 }
