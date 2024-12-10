@@ -14,6 +14,7 @@ solve_d05 :: proc(part: util.Part, data: string) -> string {
 	return ""
 }
 
+@(private = "file")
 Puz :: struct {
 	rules: map[int][dynamic]int,
 	jobs:  [dynamic][dynamic]int,

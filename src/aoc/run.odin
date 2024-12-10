@@ -4,8 +4,33 @@ import "../aoc24"
 import "../util"
 import "core:fmt"
 
+
 run :: proc() {
-	day_07()
+	day_09()
+}
+
+day_09 :: proc() {
+	data := aoc24.D09_PUZ_EX
+	ans1 := aoc24.solve_d09(.p1, data)
+	// ans2 := aoc24.solve_d09(.p2, data)
+	defer {
+		delete(ans1)
+		// delete(ans2)
+	}
+	// fmt.printfln("Answers to day 9: %v, %v", ans1, ans2)
+	fmt.printfln("Answers to day 9: %v", ans1)
+}
+
+
+day_08 :: proc() {
+	data := aoc24.D08_PUZ_EX
+	ans1 := 0 //aoc24.solve_d08(.p1, data)
+	ans2 := aoc24.solve_d08(.p2, data)
+	defer {
+		//delete(ans1)
+		delete(ans2)
+	}
+	fmt.printfln("Answers to day 8: %s, %s", ans1, ans2)
 }
 
 day_07 :: proc() {
