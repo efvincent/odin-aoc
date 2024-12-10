@@ -5,6 +5,7 @@ import "core:fmt"
 import "core:log"
 import "core:math"
 import "core:slice"
+import "core:strconv"
 import conv "core:strconv"
 import "core:strings"
 import "core:testing"
@@ -31,21 +32,21 @@ File :: struct {
 	size: int,
 }
 
-init_puz :: proc() -> Puz {
-	return Puz{spaces = make([dynamic]int), files = make([dynamic]File)}
-}
+// init_puz :: proc() -> Puz {
+// 	return Puz{spaces = make([dynamic]int), files = make([dynamic]File)}
+// }
 
 @(private = "file")
 parse :: proc(data: string) -> string {
 	file_id := 0
 	for idx := 0; idx < (len(data) - 1); idx += 2 {
 		f := File {
-			id   = file_id,
-			size = strconv.atoi(data[idx]),
+			id = file_id,
+			//size = strconv.atoi(data[idx]),
 		}
 
 
-		id += 1
+		file_id += 1
 	}
 	return ""
 }
