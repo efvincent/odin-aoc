@@ -1,13 +1,8 @@
 package aoc24
 
 import "../util"
-import "core:fmt"
-import "core:log"
 import "core:math"
-import "core:slice"
-import conv "core:strconv"
 import "core:strings"
-import "core:testing"
 
 @(private = "file")
 Point :: struct {
