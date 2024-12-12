@@ -166,6 +166,7 @@ solve1 :: proc(data: string) -> string {
 	return util.to_str(steps)
 }
 
+@(private = "file")
 hash :: proc(p: Point) -> int {
 	return p.x * 1000 + p.y
 }
