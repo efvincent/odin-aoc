@@ -2,8 +2,6 @@ package aoc24
 
 import "../util"
 import "core:fmt"
-import "core:slice"
-import conv "core:strconv"
 import "core:strings"
 
 @(private = "file")
@@ -16,6 +14,7 @@ Puz :: struct {
 
 @(private = "file")
 Point :: [2]int
+
 @(private = "file")
 Direction :: enum (u8) {
 	N,
@@ -25,51 +24,54 @@ Direction :: enum (u8) {
 }
 
 solve_d10 :: proc(part: util.Part, data: string) -> string {
-	switch part {
-	case .p1:
-		return solve1(data)
-	case .p2:
-		return solve2(data)
-	}
-	return ""
-}
-
-@(private = "file")
-solve2 :: proc(data: string) -> string {
-	return ""
-}
-
-@(private = "file")
-solve1 :: proc(data: string) -> string {
+	distinct_only := part == .p2
 	puz := parse(data)
+	ppuz(&puz)
+	count := 0
 	for th in puz.trailheads {
-
+		ends := make_map(map[int]bool, allocator = context.temp_allocator)
+		sub_count := trails_from_head(&puz, th, distinct_only, &ends)
+		count += sub_count
 	}
-	return ""
+	return util.to_str(count)
+}
+
+@(private = "file")
+trails_from_head :: proc(puz: ^Puz, head: Point, distinct_only: bool, ends: ^map[int]bool) -> int {
+	altitude := get(puz^, head)
+	count := 0
+	for dir in Direction {
+		neighbor := move(puz^, head, dir) or_continue
+		neighbor_altitude := get(puz^, neighbor)
+		key := hash(neighbor)
+		if altitude == '8' && neighbor_altitude == '9' && !(key in ends) {
+			if !distinct_only do ends[key] = true
+			count += 1
+		} else {
+			if neighbor_altitude == altitude + 1 {
+				neighbor, _ = move(puz^, head, dir)
+				count += trails_from_head(puz, neighbor, distinct_only, ends)
+			}
+		}
+	}
+	return count
 }
 
 @(private = "file")
 parse :: proc(data: string) -> Puz {
-	// NOTE: to wrap enum -> d2 := Direction((u8(Direction.E) + 7) % 4)
 	span := strings.index(data, "\n")
 	puz := Puz {
-		data = transmute([]u8)(data),
-		maxx = span,
-		maxy = (len(data) / span),
+		data       = transmute([]u8)(data),
+		maxx       = span,
+		maxy       = (len(data) / span),
+		trailheads = make_dynamic_array([dynamic]Point, allocator = context.temp_allocator),
 	}
-	puz.trailheads = make_dynamic_array([dynamic]Point, allocator = context.temp_allocator)
-	context.user_ptr = &puz.trailheads
-	defer context.user_ptr = nil
-
 	value_fn :: proc(puz: ^Puz, p: Point, v: u8) {
 		if v == '0' {
 			append_elem(&puz.trailheads, p)
 		}
 	}
-
 	iterate_puz(&puz, value_fn)
-
-	ppuz(&puz)
 	return puz
 }
 
@@ -107,6 +109,11 @@ get :: proc(puz: Puz, p: Point) -> u8 {
 }
 
 @(private = "file")
+hash :: proc(p: Point) -> int {
+	return 1000 * p.y + p.x
+}
+
+@(private = "file")
 iterate_puz :: proc(
 	puz: ^Puz,
 	value_fn: proc(puz: ^Puz, point: Point, value: u8),
@@ -126,8 +133,5 @@ ppuz :: proc(puz: ^Puz) {
 	value_fn :: proc(_: ^Puz, p: Point, v: u8) {fmt.print(rune(v))}
 	row_fn :: proc() {fmt.println()}
 	iterate_puz(puz, value_fn, row_fn)
-	for th in puz.trailheads {
-		fmt.printfln("trailhead: %v", th)
-	}
 	fmt.println()
 }
