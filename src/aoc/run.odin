@@ -4,9 +4,19 @@ import "../aoc24"
 import "../util"
 import "core:fmt"
 
-
 run :: proc() {
-	day_10()
+	day_11()
+}
+
+day_11 :: proc() {
+	data := aoc24.D11_PUZ
+	ans1 := aoc24.solve_d11(.p1, data)
+	ans2 := aoc24.solve_d11(.p2, data)
+	defer {
+		delete(ans1)
+		delete(ans2)
+	}
+	fmt.printfln("Answers to day 11: %v, %v", ans1, ans2)
 }
 
 day_10 :: proc() {
@@ -89,8 +99,8 @@ day_04 :: proc() {
 day_01 :: proc() {
 	data := aoc24.D01_PUZ
 
-	ans1 := aoc24.solve_d01(util.Part.p1, data)
-	ans2 := aoc24.solve_d01(util.Part.p2, data)
+	ans1 := aoc24.solve_d01(.p1, data)
+	ans2 := aoc24.solve_d01(.p2, data)
 	defer {
 		delete(ans1)
 		delete(ans2)
@@ -101,8 +111,8 @@ day_01 :: proc() {
 day_02 :: proc() {
 	data := aoc24.D02_PUZ
 
-	ans1 := aoc24.solve_d02(util.Part.p1, data)
-	ans2 := aoc24.solve_d02(util.Part.p2, data)
+	ans1 := aoc24.solve_d02(.p1, data)
+	ans2 := aoc24.solve_d02(.p2, data)
 	defer {
 		delete(ans1)
 		delete(ans2)
@@ -113,8 +123,8 @@ day_02 :: proc() {
 
 day_03 :: proc() {
 	data := aoc24.D03_PUZ
-	ans1 := aoc24.solve_d03(util.Part.p1, data)
-	ans2 := aoc24.solve_d03(util.Part.p2, data)
+	ans1 := aoc24.solve_d03(.p1, data)
+	ans2 := aoc24.solve_d03(.p2, data)
 	defer {
 		delete(ans1)
 		delete(ans2)
