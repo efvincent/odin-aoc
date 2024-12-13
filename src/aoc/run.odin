@@ -1,7 +1,6 @@
 package aoc
 
 import "../aoc24"
-import "../util"
 import "core:fmt"
 
 run :: proc() {
@@ -9,7 +8,7 @@ run :: proc() {
 }
 
 day_12 :: proc() {
-	data := aoc24.D12_PUZ_EX1
+	data := aoc24.D12_PUZ
 	ans1 := aoc24.solve_d12(.p1, data)
 	ans2 := aoc24.solve_d12(.p2, data)
 	defer {
