@@ -5,7 +5,18 @@ import "../util"
 import "core:fmt"
 
 run :: proc() {
-	day_11()
+	day_12()
+}
+
+day_12 :: proc() {
+	data := aoc24.D12_PUZ_EX1
+	ans1 := aoc24.solve_d12(.p1, data)
+	ans2 := aoc24.solve_d12(.p2, data)
+	defer {
+		delete(ans1)
+		delete(ans2)
+	}
+	fmt.printfln("Answers to day 12: %v, %v", ans1, ans2)
 }
 
 day_11 :: proc() {
