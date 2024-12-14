@@ -17,10 +17,6 @@ solve_dxx :: proc(part: util.Part, data: string) -> string {
 
 @(private = "file")
 parse :: proc(data: string) -> string {
-	orig_allocator := context.allocator
-	context.allocator = context.temp_allocator
-	defer context.allocator = orig_allocator
-
 	raw_lines := strings.split_lines(data)
 
 	return ""
