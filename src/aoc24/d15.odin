@@ -2,7 +2,6 @@ package aoc24
 
 import "../util"
 import "core:fmt"
-import "core:slice"
 import "core:strings"
 
 Point :: [2]int
@@ -52,53 +51,6 @@ solve_d15 :: proc(part: util.Part, data: string) -> string {
 // -----------------------------------------------------------------------------------------
 
 @(private = "file")
-solve2 :: proc(data: string) -> string {
-	puz := parse(data, .p2)
-	commands := make_dynamic_array([dynamic]Command)
-	defer {
-		destroy_puz(puz)
-		delete_dynamic_array(commands)
-	}
-
-	ppuz(puz, pdirs = true)
-
-	for dir in puz.dirs {
-		if dir == .N || dir == .S {
-			new_bot, ok := move2_NS(&puz, &commands, puz.bot, dir)
-			if ok {
-				// we have a series of commands to apply
-				for cmd in commands {
-					puz.grid[cmd.loc.y][cmd.loc.x] = cmd.value
-				}
-				puz.bot = new_bot
-				ppuz(puz, rune(dir))
-			}
-			clear_dynamic_array(&commands)
-		} else {
-			new_bot, ok := move1(&puz, puz.bot, dir)
-			if ok {
-				puz.bot = new_bot
-			}
-			ppuz(puz, rune(dir))
-		}
-	}
-
-	score := 0
-	for y in 0 ..< puz.maxy {
-		for x in 0 ..< puz.maxx {
-			content := get(puz, Point{x, y})
-			if content == .Box {
-				score += 100 * y + x
-			}
-		}
-	}
-
-	// ppuz(puz)
-
-	return util.to_str(score)
-}
-
-@(private = "file")
 solve1 :: proc(data: string) -> string {
 	puz := parse(data)
 	defer destroy_puz(puz)
@@ -125,6 +77,73 @@ solve1 :: proc(data: string) -> string {
 }
 
 @(private = "file")
+solve2 :: proc(data: string) -> string {
+	puz := parse(data, .p2)
+	commands := make_dynamic_array([dynamic]Command)
+	defer {
+		destroy_puz(puz)
+		delete_dynamic_array(commands)
+	}
+
+	ppuz(puz, pdirs = true)
+
+	for dir in puz.dirs {
+		if dir == .N || dir == .S {
+			new_bot, ok := move2_NS(&puz, &commands, puz.bot, dir)
+			if ok {
+				// we have a series of commands to apply
+				for cmd in commands {
+					puz.grid[cmd.loc.y][cmd.loc.x] = cmd.value
+				}
+				puz.bot = new_bot
+				fixup(&puz)
+			}
+			clear_dynamic_array(&commands)
+		} else {
+			new_bot, ok := move1(&puz, puz.bot, dir)
+			if ok {
+				puz.bot = new_bot
+			}
+		}
+	}
+
+	score := 0
+	// score is from the closest edge of the map to the box
+	for y in 0 ..< puz.maxy {
+		for x_left in 0 ..< puz.maxx {
+			content := get(puz, Point{x_left, y})
+			if content == .BoxLeft {
+				score += 100 * y + x_left
+			}
+		}
+	}
+
+	ppuz(puz)
+	return util.to_str(score)
+}
+
+fixup :: proc(puz: ^Puz) {
+	for y in 0 ..< puz.maxy {
+		for x in 0 ..< puz.maxx {
+			content := get(puz^, Point{x, y})
+			other_dir: Dir
+			other_half: Content
+			if content == .BoxLeft {
+				other_dir = .E
+				other_half = .BoxRight
+			} else if content == .BoxRight {
+				other_dir = .W
+				other_half = .BoxLeft
+			} else {
+				continue
+			}
+			loc := shift(Point{x, y}, other_dir)
+			puz.grid[loc.y][loc.x] = other_half
+		}
+	}
+}
+
+@(private = "file")
 move1 :: proc(puz: ^Puz, loc: Point, dir: Dir) -> (Point, bool) {
 	// can I move?
 	cur := get(puz^, loc)
@@ -147,7 +166,16 @@ move1 :: proc(puz: ^Puz, loc: Point, dir: Dir) -> (Point, bool) {
 }
 
 @(private = "file")
-move2_NS :: proc(puz: ^Puz, commands: ^[dynamic]Command, loc: Point, dir: Dir) -> (Point, bool) {
+move2_NS :: proc(
+	puz: ^Puz,
+	commands: ^[dynamic]Command,
+	loc: Point,
+	dir: Dir,
+	sent_by_other_half: bool = false,
+) -> (
+	Point,
+	bool,
+) {
 
 	// get the next location, what's in the next location, and what's in the current location
 	next_loc := shift(loc, dir)
@@ -192,24 +220,36 @@ move2_NS :: proc(puz: ^Puz, commands: ^[dynamic]Command, loc: Point, dir: Dir) -
 		}
 
 	case .BoxLeft, .BoxRight:
-		// I'm half a box, so I need to check both current and the other half
+		// I'm half a box, so I migh need to check both current and the other half
 		other_half_loc: Point
+		other_half_ok: bool
+
+		append(commands, Command{loc, .Space})
+
 		if cur == .BoxLeft {
 			other_half_loc = shift(loc, .E)
 		} else {
 			other_half_loc = shift(loc, .W)
 		}
 
-		// I'm one side of a box. I need to check if I can move AND if the other side can move
+		// I'm one side of a box. If the other half told me to move, then I just need to
+		// move myself. Otherwise, I need to tell my other half to move
+		if !sent_by_other_half {
+			_, other_half_ok = move2_NS(
+				puz,
+				commands,
+				other_half_loc,
+				dir,
+				sent_by_other_half = true,
+			)
+		}
 
-		// first check the other half
-		_, ok = move2_NS(puz, commands, other_half_loc, dir)
-		if ok {
-			// the other half can move, can I?
+		if sent_by_other_half || other_half_ok {
+			// either I've been told to move by my other half, or I told my other half to 
+			// move and it was ok, either way I now can move
 			if next == .Space {
 				// I've got a space above, I can move
 				append(commands, Command{next_loc, cur})
-				append(commands, Command{loc, .Space})
 				return next_loc, true
 			}
 			// what's in front of me isn't a space... see if it can move
@@ -217,8 +257,6 @@ move2_NS :: proc(puz: ^Puz, commands: ^[dynamic]Command, loc: Point, dir: Dir) -
 			if ok {
 				// the thing in front of me can move, so can I
 				append(commands, Command{next_loc, cur})
-				// !! it might be that the thing behind me is a space ... in which case
-				// I'll need to be replaced by a space
 				behind_loc := shift(loc, dir == .N ? .S : .N)
 				behind := get(puz^, behind_loc)
 				if behind == .Space {

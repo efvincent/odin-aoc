@@ -8,7 +8,7 @@ run :: proc() {
 }
 
 day_15 :: proc() {
-	data := aoc24.D15_PUZ_EX3
+	data := aoc24.D15_PUZ
 	// ans1 := aoc24.solve_d15(.p2, data)
 	ans2 := aoc24.solve_d15(.p2, data)
 	defer {
