@@ -4,8 +4,10 @@ import "../util"
 import "core:fmt"
 import "core:strings"
 
+@(private = "file")
 Point :: [2]int
 
+@(private = "file")
 Dir :: enum {
 	N = '^',
 	S = 'v',
@@ -13,6 +15,7 @@ Dir :: enum {
 	W = '<',
 }
 
+@(private = "file")
 Content :: enum {
 	Wall     = '#',
 	Space    = '.',
@@ -22,8 +25,10 @@ Content :: enum {
 	BoxRight = ']',
 }
 
+@(private = "file")
 Grid :: [dynamic][dynamic]Content
 
+@(private = "file")
 Puz :: struct {
 	maxx: int,
 	maxy: int,
