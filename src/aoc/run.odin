@@ -4,19 +4,31 @@ import "../aoc24"
 import "core:fmt"
 
 run :: proc() {
-	day_15()
+	day_16()
+	free_all(context.temp_allocator)
+}
+
+day_16 :: proc() {
+	data := aoc24.D16_PUZ
+	ans1 := aoc24.solve_d16(.p1, data)
+	// ans2 := aoc24.solve_d16(.p2, data)
+	defer {
+		delete(ans1)
+		// delete(ans2)
+	}
+	fmt.printfln("Answers to day 16: %v", ans1)
+	// fmt.printfln("Answers to day 16: %v, %v", ans1, ans2)
 }
 
 day_15 :: proc() {
 	data := aoc24.D15_PUZ
-	// ans1 := aoc24.solve_d15(.p2, data)
+	ans1 := aoc24.solve_d15(.p1, data)
 	ans2 := aoc24.solve_d15(.p2, data)
 	defer {
-		// delete(ans1)
+		delete(ans1)
 		delete(ans2)
 	}
-	fmt.printfln("Answers to day 15: %v", ans2)
-	// fmt.printfln("Answers to day 15: %v, %v", ans1, ans2)
+	fmt.printfln("Answers to day 15: %v, %v", ans1, ans2)
 }
 
 day_14 :: proc() {
