@@ -2,8 +2,13 @@ package aoc24
 
 import "../util"
 import "core:slice"
+import "core:fmt"
 import conv "core:strconv"
 import "core:strings"
+
+Puz :: struct {
+
+}
 
 solve_dxx :: proc(part: util.Part, data: string) -> string {
 	switch part {
@@ -16,10 +21,11 @@ solve_dxx :: proc(part: util.Part, data: string) -> string {
 }
 
 @(private = "file")
-parse :: proc(data: string) -> string {
+parse :: proc(data: string) -> Puz {
 	raw_lines := strings.split_lines(data)
+	puz:Puz
 
-	return ""
+	return puz
 }
 
 @(private = "file")
