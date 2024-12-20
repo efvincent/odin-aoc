@@ -4,13 +4,14 @@ import "../util"
 import pq "core:container/priority_queue"
 import "core:fmt"
 import "core:math"
+import "core:slice"
 import "core:strings"
 
 @(private = "file")
 Point :: [2]int
 
 @(private = "file")
-Direction :: enum {
+Dir :: enum {
 	N = 0,
 	E = 1,
 	S = 2,
@@ -27,16 +28,8 @@ Content :: enum {
 
 @(private = "file")
 Node :: struct {
-	content: Content,
-	loc:     Point,
-	id:      int,
-	cost:    int,
-}
-
-@(private = "file")
-Node2 :: struct {
 	pos:  Point,
-	dir:  Direction,
+	dir:  Dir,
 	cost: int,
 }
 
@@ -45,19 +38,11 @@ Grid :: []Content
 
 @(private = "file")
 Puz :: struct {
-	maxx:      int,
-	grid:      []Node,
-	maxy:      int,
-	start:     Point,
-	end:       Point,
-	distances: map[int]int,
-	visited:   map[int]bool,
-}
-
-@(private = "file")
-Command :: struct {
-	loc:   Point,
-	value: Content,
+	maxx:  int,
+	grid:  []Content,
+	maxy:  int,
+	start: Point,
+	end:   Point,
 }
 
 solve_d16 :: proc(part: util.Part, data: string) -> string {
@@ -78,27 +63,18 @@ solve2 :: proc(data: string) -> string {
 @(private = "file")
 solve1 :: proc(data: string) -> string {
 	puz := parse(data)
-	defer destroy_puz(&puz)
+	defer delete(puz.grid)
 	c := find_smallest_cost(&puz)
 	return util.to_str(c)
 }
 
 @(private = "file")
 find_smallest_cost :: proc(puz: ^Puz) -> int {
-	hash2 :: proc(loc: Point, dir: Direction) -> int {
-		return int(dir) * 1000000 + loc.y * 1000 + loc.x
-	}
-	less :: proc(a, b: Node2) -> bool {
-		return a.cost < b.cost
-	}
-	swap :: proc(q: []Node2, i, j: int) {
-		q[i], q[j] = q[j], q[i]
-	}
-
 	smallest_cost := max(int)
 	visited := make(map[int]struct {})
 	distance := make(map[int]int)
-	queue: pq.Priority_Queue(Node2)
+	queue: pq.Priority_Queue(Node)
+
 	defer {
 		delete(visited)
 		delete(distance)
@@ -106,22 +82,35 @@ find_smallest_cost :: proc(puz: ^Puz) -> int {
 	}
 
 	// initialize the queue with the starting position
-	pq.init(&queue, less, swap)
-	pq.push(&queue, Node2{puz.start, .E, 0})
+	pq.init(&queue, node_less_cost, node_swap)
+	pq.push(&queue, Node{puz.start, .E, 0})
 
+	// iterate through all the nodes in the priority queue
 	for pq.len(queue) > 0 {
+
+		// pop a node off the queue, calc it's hash ID
 		cur_node := pq.pop(&queue)
-		cur_node_id := hash2(cur_node.pos, cur_node.dir)
+		cur_node_id := hash(cur_node.pos, cur_node.dir)
+
+		// record the fact this node was visited
 		visited[cur_node_id] = {}
-		if get(puz^, cur_node.pos).content == .End {
-			smallest_cost = smallest_cost < cur_node.cost ? smallest_cost : cur_node.cost
+
+		// Check to see if this is the end of the path we're searching for
+		if cur_node.pos == puz.end {
+			// if so, update the smallest cost to the cost at the current (End) node if
+			// it's smaller than the current smallest cost
+			smallest_cost = min(smallest_cost, cur_node.cost)
+			// pop the next node off the queue
 			continue
 		}
+
+		// If we've gotten this far, we haven't yet reached the end.
+		// Loop through all the directions
 		for n in 0 ..< 4 {
-			// check each dir from the current pos
+			// check each direction from the current pos
 			next_pos: Point
 			ok: bool
-			dir := Direction(n)
+			dir := Dir(n)
 
 			// if the move in the current dir is not allowed, continue to next dir
 			if next_pos, ok = can_move(puz^, nil, cur_node.pos, dir, false); !ok {
@@ -129,31 +118,207 @@ find_smallest_cost :: proc(puz: ^Puz) -> int {
 			}
 
 			// if we've visited this node from this direction, continue to next dir
-			if hash2(next_pos, dir) in visited {
+			next_node_id := hash(next_pos, dir)
+			if next_node_id in visited {
+				// the next node has been visited from direction `dir`, check the next direction
 				continue
 			}
 
+			// determine the cost of moving to this next node from the `dir` direction
 			next_cost := cur_node.cost + 1 + cost_change(cur_node.dir, dir)
-			next_node_id := hash2(next_pos, dir)
 			prev_cost: int
 
 			// have we visited this node at a cheaper cost?
 			if prev_cost, ok = distance[next_node_id]; ok && prev_cost < next_cost {
+				// we've seen this node from a cheaper path, check the next direction
 				continue
 			}
 
+			// if the cost to the next node from this direction is more than the 
+			// smallest cost yet found, check the next direction
 			if next_cost >= smallest_cost {
 				continue
 			}
+
+			// record that we've visited the `next_node` from the `dir` direction
 			distance[next_node_id] = next_cost
-			pq.push(&queue, Node2{next_pos, dir, next_cost})
+
+			// push the `next_node` onto the queue at `next_cost` cost
+			pq.push(&queue, Node{next_pos, dir, next_cost})
 		}
 	}
 	return smallest_cost
 }
 
+find_all_best_paths :: proc(puz: ^Puz) -> (int, [][]Node) {
+	Pred :: struct {
+		pos: Point,
+		dir: Dir,
+	}
+
+	smallest_cost := max(int)
+	distance := make(map[int]int)
+	predecessors := make(map[int][dynamic]Pred)
+	queue: pq.Priority_Queue(Node)
+	defer {
+		delete(distance)
+		delete(predecessors)
+		pq.destroy(&queue)
+	}
+
+	// no visited set, we use distance to track where we have been
+	pq.init(&queue, node_less_cost, node_swap)
+	pq.push(&queue, Node{puz.start, .E, 0})
+
+	// intialize start distance
+	distance[hash(puz.start, .E)] = 0
+
+	// process items in the priority queue
+	for pq.len(queue) > 0 {
+		cur_node := pq.pop(&queue)
+		d := cur_node.dir
+		cur_node_id := hash(cur_node.pos, cur_node.dir)
+
+		// skip if the cost of this node is bigger than we have found previously
+		if cost, ok := distance[cur_node_id]; ok {
+			if cur_node.cost > cost do continue
+		}
+
+		if cur_node.pos == puz.end {
+			smallest_cost = min(smallest_cost, cur_node.cost)
+			// don't continue, we need to explore all paths to the end
+		}
+
+		// loop through all directions
+		for n in 0 ..< 4 {
+			next_pos: Point
+			ok: bool
+			dir := Dir(n)
+
+			// if the move in the current dir from the current node is not allowed, check next dir
+			if next_pos, ok = can_move(puz^, nil, cur_node.pos, dir, false); !ok {
+				continue
+			}
+
+			// get the next node from `cur_node` in direction `dir`
+			next_node_id := hash(next_pos, dir)
+			next_cost := cur_node.cost + 1 + cost_change(d, dir)
+
+			// ignore paths with cost too big
+			if next_cost > smallest_cost && cur_node.pos != puz.end {
+				continue
+			}
+
+			// is the path we're exploring better than the one we already have here?
+			existing_cost_id := hash(next_pos, d)
+			existing_cost, existing_cost_found := distance[existing_cost_id]
+			pred := Pred {
+				pos = next_pos,
+				dir = d,
+			}
+			if !existing_cost_found || next_cost < existing_cost {
+				// better path
+				distance[existing_cost_id] = next_cost
+				{
+					pred_list := make_dynamic_array([dynamic]Pred)
+					append(&pred_list, pred)
+					predecessors[existing_cost_id] = pred_list
+				}
+			} else if next_cost > existing_cost {
+				continue
+			} else {
+				// same path, just update predecessors
+				if pred_list, pred_list_found := predecessors[existing_cost_id]; pred_list_found {
+					if !slice.contains(pred_list[:], pred) {
+						append(&pred_list, pred)
+					}
+				}
+			}
+
+			pq.push(&queue, Node{next_pos, dir, next_cost})
+
+		}
+	}
+
+	// clean up the predecessors at the end
+	defer {
+		for _, p in predecessors {
+			delete_dynamic_array(p)
+		}
+	}
+
+	// now that we have explored the whole pam, create the paths
+	all_shortest_paths := make([dynamic]([dynamic]Pred))
+	defer delete_dynamic_array(all_shortest_paths)
+
+	// a stack to keep all the in-progress paths we're building
+	stack := make_dynamic_array([dynamic]Pred)
+
+	for n in 0 ..< 4 {
+		dir := Dir(n)
+		node := Pred {
+			pos = puz.end,
+			dir = dir,
+		}
+		if node in distance {
+			append(&stack)
+		}
+	}
+
+	return 0, nil
+}
+
+/*
+
+
+    // Now that we have explored the whole map, create the paths.
+    // Iterative Backtracking.
+    let mut all_shortest_paths: Vec<Vec<PathNode>> = Vec::new();
+    // A stack to keep all the in-progress paths we are building.
+    let mut stack: VecDeque<(Vec<PathNode>, (usize, Direction))> = VecDeque::new();
+
+    // Initialize the stack with the end position / direction pair.
+    for end_direction in ALL_DIRECTIONS
+        .iter()
+        .filter(|&&d| distance.contains_key(&(end, d)))
+    {
+        stack.push_back((
+            vec![PathNode {
+                pos: end,
+                dir: *end_direction,
+            }],
+            (end, *end_direction),
+        ));
+    }
+
+    while let Some((current_path, current_node)) = stack.pop_back() {
+        if current_node == (start, start_direction) {
+            // A complete path is found, adding it to the list.
+            let mut complete_path = current_path.clone();
+            // Path was build from end, so reverse it.
+            complete_path.reverse();
+            all_shortest_paths.push(complete_path);
+        } else if let Some(prev_nodes) = predecessors.get(&current_node) {
+            // We got all the predecessors of the current node.
+            for &(prev_pos, prev_dir) in prev_nodes {
+                // For each predecessor, we create a new path and add it
+                // to the stack, to be checked.
+                let mut new_path = current_path.clone();
+                new_path.push(PathNode {
+                    pos: prev_pos,
+                    dir: prev_dir,
+                });
+                stack.push_back((new_path, (prev_pos, prev_dir)));
+            }
+        }
+    }
+
+    (smallest_cost, all_shortest_paths)
+}
+*/
+// compute the change in cost incurred by turning from direction `a` to direction `b`
 @(private = "file")
-cost_change :: proc(a: Direction, b: Direction) -> int {
+cost_change :: proc(a: Dir, b: Dir) -> int {
 	d1 := int(a)
 	d2 := int(b)
 	if d1 == d2 do return 0
@@ -176,13 +341,10 @@ parse :: proc(data: string) -> Puz {
 		if first {
 			first = false
 			puz.maxx = len(raw_line)
-			puz.grid = make([]Node, puz.maxy * puz.maxx)
-			puz.distances = make(map[int]int)
-			puz.visited = make(map[int]bool)
+			puz.grid = make([]Content, puz.maxy * puz.maxx)
 		}
 		for char, x in raw_line {
 			loc := Point{x, y}
-			cost = max(int)
 			if char == 'S' {
 				puz.start = loc
 				cost = 0
@@ -193,12 +355,7 @@ parse :: proc(data: string) -> Puz {
 			if char == '.' do char_mod = ' '
 			else if char == '#' do char_mod = '█'
 			else do char_mod = char
-			puz.distances[hash(loc)] = cost
-			put(
-				&puz,
-				loc,
-				Node{content = Content(char_mod), cost = cost, loc = loc, id = hash(loc)},
-			)
+			put(&puz, loc, Content(char_mod))
 		}
 	}
 
@@ -212,14 +369,14 @@ can_move :: proc(
 	puz: Puz,
 	visited: map[int]struct {},
 	loc: Point,
-	dir: Direction,
+	dir: Dir,
 	check_visited: bool = true,
 ) -> (
 	moved: Point,
 	ok: bool,
 ) {
 	moved = shift(loc, dir)
-	if get(puz, moved).content == Content.Wall do return loc, false
+	if get(puz, moved) == Content.Wall do return loc, false
 	if inbounds(puz, loc) && (!check_visited || !(hash(moved) in visited)) do return moved, true
 	return loc, false
 }
@@ -229,7 +386,7 @@ ppuz :: proc(puz: Puz, visited: map[int]struct {} = nil) {
 	for y in 0 ..< puz.maxy {
 		for x in 0 ..< puz.maxx {
 			p := Point{x, y}
-			c := rune(get(puz, p).content)
+			c := rune(get(puz, p))
 			if c == rune(Content.Wall) {
 				fmt.printf("%v%v", c, c)
 			} else if visited != nil && c == rune(Content.Space) && hash(p) in visited {
@@ -244,49 +401,35 @@ ppuz :: proc(puz: Puz, visited: map[int]struct {} = nil) {
 }
 
 @(private = "file")
-destroy_puz :: proc(puz: ^Puz) {
-	delete(puz.grid)
-	delete(puz.distances)
-	delete(puz.visited)
-}
-
-@(private = "file")
 inbounds :: #force_inline proc(puz: Puz, loc: Point) -> bool {
 	return !(loc.x < 0 || loc.x >= puz.maxx || loc.y < 0 || loc.y >= puz.maxy)
 }
 
 @(private = "file")
-get :: #force_inline proc(puz: Puz, loc: Point) -> Node {
-	if !inbounds(puz, loc) do return Node{}
+get :: #force_inline proc(puz: Puz, loc: Point) -> Content {
+	if !inbounds(puz, loc) do return nil
 	return puz.grid[loc.y * puz.maxy + loc.x]
 }
 
 @(private = "file")
-put :: #force_inline proc(puz: ^Puz, loc: Point, node: Node) -> bool {
+put :: #force_inline proc(puz: ^Puz, loc: Point, content: Content) -> bool {
 	if !inbounds(puz^, loc) do return false
-	puz.grid[loc.y * puz.maxy + loc.x] = node
+	puz.grid[loc.y * puz.maxy + loc.x] = content
 	return true
 }
 
 @(private = "file")
-record :: #force_inline proc(visited: ^map[int]struct {}, loc: Point) {
-	key := hash(loc)
-	visited[key] = {}
+hash :: proc(loc: Point, dir: Dir = .N) -> int {
+	return int(dir) * 1000000 + loc.y * 1000 + loc.x
 }
 
 @(private = "file")
-erase :: #force_inline proc(visited: ^map[int]struct {}, loc: Point) {
-	key := hash(loc)
-	delete_key(visited, key)
+destroy_puz :: proc(puz: ^Puz) {
+	delete(puz.grid)
 }
 
 @(private = "file")
-hash :: #force_inline proc(loc: Point) -> int {
-	return loc.y * 1000 + loc.x
-}
-
-@(private = "file")
-shift :: #force_inline proc(loc: Point, dir: Direction) -> Point {
+shift :: #force_inline proc(loc: Point, dir: Dir) -> Point {
 	new_loc: Point
 	switch dir {
 	case .N:
@@ -302,66 +445,7 @@ shift :: #force_inline proc(loc: Point, dir: Direction) -> Point {
 }
 
 @(private = "file")
-solve1x :: proc(data: string) -> string {
-	puz := parse(data)
-	defer destroy_puz(&puz)
-	ppuz(puz)
-	visited := make_map(map[int]struct {}, allocator = context.temp_allocator)
-	cost, _ := walk(&puz, puz.start, Direction.E, 0, &visited)
-	ppuz(puz, visited)
-	return util.to_str(cost)
-}
+node_less_cost :: proc(a, b: Node) -> bool {return a.cost < b.cost}
 
-walk :: proc(
-	puz: ^Puz,
-	current_loc: Point,
-	facing: Direction,
-	sub_cost: int,
-	visited: ^map[int]struct {}, // a set of points
-) -> (
-	cost: int,
-	ok: bool,
-) {
-	fmt.printfln("(%v,%v) %v", current_loc.x, current_loc.y, facing)
-
-	// are we at the end?
-	if get(puz^, current_loc).content == Content.End {
-		// don't need to record that we were here, since we won't be 
-		// taking any more steps
-		fmt.println("  END!")
-		return sub_cost, true
-	}
-
-	moved: Point
-
-	// can I move in the direction I'm already facing?
-	if moved, ok = can_move(puz^, visited^, current_loc, facing); ok {
-		// We can move in the facing direction without turning
-		// record that we were here, so that if we're ever here again we'll know
-		fmt.println("  moving forward")
-		record(visited, current_loc)
-		cost, ok = walk(puz, moved, facing, sub_cost + 1, visited)
-		if ok do return
-		erase(visited, current_loc)
-	}
-	// try turning right
-	right := Direction((int(facing) + 1) % 4)
-	if moved, ok = can_move(puz^, visited^, current_loc, right); ok {
-		fmt.println("  turning right")
-		record(visited, current_loc)
-		cost, ok = walk(puz, moved, right, sub_cost + 1000 + 1, visited)
-		if ok do return
-		erase(visited, current_loc)
-	}
-	// try turning left
-	left := facing == Direction.N ? Direction.W : Direction(int(facing) - 1)
-	if moved, ok = can_move(puz^, visited^, current_loc, left); ok {
-		fmt.println("  turning left")
-		record(visited, current_loc)
-		cost, ok = walk(puz, moved, left, sub_cost + 1000 + 1, visited)
-		if ok do return
-		erase(visited, current_loc)
-	}
-	fmt.println("  can't move, backtracking")
-	return 0, false
-}
+@(private = "file")
+node_swap :: proc(q: []Node, i, j: int) {q[i], q[j] = q[j], q[i]}
