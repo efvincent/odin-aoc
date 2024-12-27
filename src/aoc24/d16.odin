@@ -20,10 +20,12 @@ Dir :: enum {
 
 @(private = "file")
 Content :: enum {
-	Wall  = '█',
-	Space = ' ',
-	Start = 'S',
-	End   = 'E',
+	Wall    = '█',
+	Space   = ' ',
+	Start   = 'S',
+	End     = 'E',
+	Visited = 'O',
+	V2      = '?',
 }
 
 @(private = "file")
@@ -73,23 +75,26 @@ solve1 :: proc(data: string) -> string {
 	grid := parse(data)
 	pgrid(grid)
 	defer delete(grid.content)
-	return util.to_str(part1(grid))
+	p1, p2 := part1(&grid)
+	pgrid(grid)
+	fmt.println(p1, p2)
+	return util.to_str(p1)
 }
 
 // -------------------------------------------------------------------------
 
 @(private = "file")
-part1 :: proc(grid: Grid) -> int {
+part1 :: proc(grid: ^Grid) -> (int, int) {
 	ok: bool
 	queue: pq.Priority_Queue(Node)
 	pq.init(&queue, node_less_cost, node_swap)
 
 	// initialize all the nodes
 	nodes := make(map[Point]Node)
-	for x in 0 ..< grid.max.y {
-		for y in 0 ..< grid.max.x {
+	for y in 0 ..< grid.max.y {
+		for x in 0 ..< grid.max.x {
 			p := Point{x, y}
-			if c := get(grid, p); c != nil && c != .Wall {
+			if c := get(grid^, p); c != nil && c != .Wall {
 				n := Node {
 					pos     = p,
 					dir     = .E,
@@ -113,14 +118,43 @@ part1 :: proc(grid: Grid) -> int {
 			// neighbor position
 			nbr_pos := shift(cur.pos, dir_to_nbr)
 			nbr: Node
-			if nbr, ok = nodes[nbr_pos]; ok && !nbr.visited {
+			if nbr, ok = nodes[nbr_pos]; ok {
 				// neighbor is an unvisited node
 				// how much would it cost to get there?
 				new_cost := cur.cost + 1 + cost_change(cur.dir, dir_to_nbr)
-				if new_cost < nbr.cost {
+				if new_cost == nbr.cost {
+					fmt.printfln(
+						"new cost: %v == nbr cost: %v  num_preds: %v cur (%v,%v) nbr (%v,%v)",
+						new_cost,
+						nbr.cost,
+						nbr.num_preds,
+						cur.pos.x,
+						cur.pos.y,
+						nbr.pos.x,
+						nbr.pos.y,
+					)
+					nbr.dir = dir_to_nbr
+					nbr.preds[nbr.num_preds] = cur.pos
+					nbr.num_preds += 1
+					nodes[nbr.pos] = nbr
+					fmt.printfln("changed %v", nodes[nbr.pos])
+					pq.push(&queue, nbr)
+				} else if new_cost < nbr.cost {
+					fmt.printfln(
+						"new cost: %v < nbr cost: %v  num_preds: %v cur (%v,%v) nbr (%v,%v)",
+						new_cost,
+						nbr.cost,
+						nbr.num_preds,
+						cur.pos.x,
+						cur.pos.y,
+						nbr.pos.x,
+						nbr.pos.y,
+					)
 					nbr.cost = new_cost
 					nbr.dir = dir_to_nbr
 					nbr.preds[0] = cur.pos
+					nbr.num_preds = 1
+					nodes[nbr.pos] = nbr
 					pq.push(&queue, nbr)
 				}
 			}
@@ -131,7 +165,21 @@ part1 :: proc(grid: Grid) -> int {
 		cur.visited = true
 		nodes[cur.pos] = cur
 	}
-	return nodes[grid.end].cost
+
+	// update grid with visited content by backtracking from the end through the preds
+	cur := nodes[grid.end]
+	path_count := make(map[Point]struct {}, allocator = context.temp_allocator)
+	for {
+		if cur.num_preds == 0 do break
+		for idx in 0 ..< cur.num_preds {
+			cur = nodes[cur.preds[idx]]
+			put(grid, cur.pos, cur.num_preds == 1 ? .Visited : .V2)
+			path_count[cur.pos] = {}
+		}
+		if cur.pos == grid.end do continue
+		if cur.pos == grid.start do break
+	}
+	return nodes[grid.end].cost, len(path_count)
 }
 
 // -------------------------------------------------------------------------
