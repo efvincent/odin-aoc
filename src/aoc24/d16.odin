@@ -28,10 +28,12 @@ Content :: enum {
 
 @(private = "file")
 Node :: struct {
-	pos:     Point,
-	dir:     Dir,
-	cost:    int,
-	visited: bool,
+	pos:       Point,
+	dir:       Dir,
+	cost:      int,
+	preds:     [3]Point,
+	num_preds: u8,
+	visited:   bool,
 }
 
 @(private = "file")
@@ -70,9 +72,66 @@ solve2 :: proc(data: string) -> string {
 solve1 :: proc(data: string) -> string {
 	grid := parse(data)
 	pgrid(grid)
-	part1(grid)
 	defer delete(grid.content)
-	return util.to_str(0)
+	return util.to_str(part1(grid))
+}
+
+// -------------------------------------------------------------------------
+
+@(private = "file")
+part1 :: proc(grid: Grid) -> int {
+	ok: bool
+	queue: pq.Priority_Queue(Node)
+	pq.init(&queue, node_less_cost, node_swap)
+
+	// initialize all the nodes
+	nodes := make(map[Point]Node)
+	for x in 0 ..< grid.max.y {
+		for y in 0 ..< grid.max.x {
+			p := Point{x, y}
+			if c := get(grid, p); c != nil && c != .Wall {
+				n := Node {
+					pos     = p,
+					dir     = .E,
+					cost    = c == .Start ? 0 : max(int),
+					visited = false,
+				}
+				nodes[p] = n
+			}
+		}
+	}
+	pq.push(&queue, nodes[grid.start])
+
+	for {
+		// set current node to the lowest cost node, should be the start node
+		// the first time through. From then on, it's the lowest cost node
+		if pq.len(queue) == 0 do break
+		cur := pq.pop(&queue)
+
+		// consider all unvisited neighbors
+		for dir_to_nbr in Dir {
+			// neighbor position
+			nbr_pos := shift(cur.pos, dir_to_nbr)
+			nbr: Node
+			if nbr, ok = nodes[nbr_pos]; ok && !nbr.visited {
+				// neighbor is an unvisited node
+				// how much would it cost to get there?
+				new_cost := cur.cost + 1 + cost_change(cur.dir, dir_to_nbr)
+				if new_cost < nbr.cost {
+					nbr.cost = new_cost
+					nbr.dir = dir_to_nbr
+					nbr.preds[0] = cur.pos
+					pq.push(&queue, nbr)
+				}
+			}
+		}
+
+		// mark current node as visited. it's already removed from the
+		// queue from the pop at the start of the loop
+		cur.visited = true
+		nodes[cur.pos] = cur
+	}
+	return nodes[grid.end].cost
 }
 
 // -------------------------------------------------------------------------
@@ -106,63 +165,6 @@ parse :: proc(data: string) -> Grid {
 	}
 	return grid
 }
-
-@(private = "file")
-part1 :: proc(grid: Grid) -> int {
-	ok: bool
-	queue: pq.Priority_Queue(^Node)
-	pq.init(&queue, node_less_cost, node_swap)
-
-	// initialize all the nodes
-	nodes := make(map[Point]^Node)
-	for x in 0 ..< grid.max.y {
-		for y in 0 ..< grid.max.x {
-			p := Point{x, y}
-			if c := get(grid, p); c != nil && c != Content('#') {
-				n := Node {
-					pos     = p,
-					dir     = .E,
-					cost    = c == .Start ? 0 : max(int),
-					visited = false,
-				}
-				nodes[p] = &n
-				pq.push(&queue, &n)
-			}
-		}
-	}
-
-	for {
-		// set current node to the lowest cost node, should be the start node
-		// the first time through. From then on, it's the lowest cost node
-		if pq.len(queue) == 0 do break
-		cur := pq.pop(&queue)
-
-		// consider all unvisited neighbors
-		for dir_to_nbr in Dir {
-			// neighbor position
-			nbr_pos := shift(cur.pos, dir_to_nbr)
-			nbr: ^Node
-			if nbr, ok = nodes[nbr_pos]; ok && !nbr.visited {
-				// neighbor is an unvisited node
-				// how much would it cost to get there?
-				n_cost := cur.cost + 1 + cost_change(cur.dir, dir_to_nbr)
-				if n_cost < nbr.cost {
-					nbr.cost = n_cost
-				}
-			}
-		}
-
-		// mark current node as visited. it's already removed from the
-		// queue from the pop at the start of the loop
-		cur.visited = true
-	}
-	for _, n in nodes {
-		fmt.println(n)
-	}
-	return 0
-}
-
-// -------------------------------------------------------------------------
 
 @(private = "file")
 cost_change :: proc(a: Dir, b: Dir) -> int {
@@ -262,7 +264,9 @@ shift :: #force_inline proc(loc: Point, dir: Dir) -> Point {
 }
 
 @(private = "file")
-node_less_cost :: proc(a, b: ^Node) -> bool {return a.cost < b.cost}
+node_less_cost :: proc(a, b: Node) -> bool {
+	return a.cost < b.cost
+}
 
 @(private = "file")
-node_swap :: proc(q: []^Node, i, j: int) {q[i], q[j] = q[j], q[i]}
+node_swap :: proc(q: []Node, i, j: int) {q[i], q[j] = q[j], q[i]}
