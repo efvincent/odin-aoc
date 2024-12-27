@@ -27,10 +27,16 @@ Content :: enum {
 }
 
 @(private = "file")
-Node :: struct {
+CostNode :: struct {
 	pos:  Point,
 	dir:  Dir,
 	cost: int,
+}
+
+@(private = "file")
+PathNode :: struct {
+	pos: Point,
+	dir: Dir,
 }
 
 @(private = "file")
@@ -57,6 +63,10 @@ solve_d16 :: proc(part: util.Part, data: string) -> string {
 
 @(private = "file")
 solve2 :: proc(data: string) -> string {
+	puz := parse(data)
+	defer delete(puz.grid)
+	a, b := find_all_best_paths(&puz)
+	fmt.printfln("a:%v\nb:%v", a, b)
 	return ""
 }
 
@@ -73,7 +83,7 @@ find_smallest_cost :: proc(puz: ^Puz) -> int {
 	smallest_cost := max(int)
 	visited := make(map[int]struct {})
 	distance := make(map[int]int)
-	queue: pq.Priority_Queue(Node)
+	queue: pq.Priority_Queue(CostNode)
 
 	defer {
 		delete(visited)
@@ -83,7 +93,7 @@ find_smallest_cost :: proc(puz: ^Puz) -> int {
 
 	// initialize the queue with the starting position
 	pq.init(&queue, node_less_cost, node_swap)
-	pq.push(&queue, Node{puz.start, .E, 0})
+	pq.push(&queue, CostNode{puz.start, .E, 0})
 
 	// iterate through all the nodes in the priority queue
 	for pq.len(queue) > 0 {
@@ -144,98 +154,171 @@ find_smallest_cost :: proc(puz: ^Puz) -> int {
 			distance[next_node_id] = next_cost
 
 			// push the `next_node` onto the queue at `next_cost` cost
-			pq.push(&queue, Node{next_pos, dir, next_cost})
+			pq.push(&queue, CostNode{next_pos, dir, next_cost})
 		}
 	}
 	return smallest_cost
 }
 
-find_all_best_paths :: proc(puz: ^Puz) -> (int, [][]Node) {
-	Pred :: struct {
-		pos: Point,
-		dir: Dir,
+ppreds :: proc(preds: map[PathNode][dynamic]PathNode, indent: int = 0) {
+	for k, v in preds {
+		for i in 0 ..< indent {
+			fmt.print(" ")
+		}
+		fmt.printf("preds of (%v,%v) : ", k.pos[0], k.pos[1])
+		for pred in v {
+			fmt.printf("%v(%v, %v) ", pred.dir, pred.pos[0], pred.pos[1])
+		}
+		fmt.println()
 	}
+}
 
+find_all_best_paths :: proc(puz: ^Puz) -> (int, [dynamic][]PathNode) {
 	smallest_cost := max(int)
-	distance := make(map[int]int)
-	predecessors := make(map[int][dynamic]Pred)
-	queue: pq.Priority_Queue(Node)
+	distances_from_start := make(map[PathNode]int) // maps (loc, dir) to a distance from the start
+	predecessors := make(map[PathNode][dynamic]PathNode)
+	queue: pq.Priority_Queue(CostNode)
 	defer {
-		delete(distance)
+		delete(distances_from_start)
 		delete(predecessors)
 		pq.destroy(&queue)
 	}
 
 	// no visited set, we use distance to track where we have been
 	pq.init(&queue, node_less_cost, node_swap)
-	pq.push(&queue, Node{puz.start, .E, 0})
+	pq.push(&queue, CostNode{puz.start, .E, 0})
 
 	// intialize start distance
-	distance[hash(puz.start, .E)] = 0
+	start_node := PathNode {
+		pos = puz.start,
+		dir = .E,
+	}
+	distances_from_start[start_node] = 0
 
 	// process items in the priority queue
 	for pq.len(queue) > 0 {
-		cur_node := pq.pop(&queue)
-		d := cur_node.dir
-		cur_node_id := hash(cur_node.pos, cur_node.dir)
+		fmt.printfln("priority queue now: %v", queue.queue)
+		cur_cost_node := pq.pop(&queue)
+		cur_path_node := PathNode {
+			pos = cur_cost_node.pos,
+			dir = cur_cost_node.dir,
+		}
+		fmt.printfln(
+			"  - popped cost node: %v\n    made cur_path_node: %v",
+			cur_cost_node,
+			cur_path_node,
+		)
 
 		// skip if the cost of this node is bigger than we have found previously
-		if cost, ok := distance[cur_node_id]; ok {
-			if cur_node.cost > cost do continue
+		if cost, ok := distances_from_start[cur_path_node]; ok {
+			fmt.printfln(
+				"  - found a previous distance from start at cur_path_node, cost = %v",
+				cost,
+			)
+			if cur_cost_node.cost > cost {
+				fmt.printfln("  - cur cost > stored distance from start, continuing")
+				continue
+			} else {
+				fmt.printfln("  - cur cost <= stored distance from start")
+			}
+		} else {
+			fmt.printfln("  - did not find previous distance from start at cur_path_node")
 		}
 
-		if cur_node.pos == puz.end {
-			smallest_cost = min(smallest_cost, cur_node.cost)
+		if cur_cost_node.pos == puz.end {
+			smallest_cost = min(smallest_cost, cur_cost_node.cost)
 			// don't continue, we need to explore all paths to the end
+			fmt.printfln("  - cur_cost_node.pos == puz.end, smallest cost now %v", smallest_cost)
+		} else {
+			fmt.printfln("  - cur_cost_node.pos != puz.end, smallest cost unchanged")
 		}
 
 		// loop through all directions
-		for n in 0 ..< 4 {
-			next_pos: Point
-			ok: bool
-			dir := Dir(n)
+		for test_dir_idx in 0 ..< 4 {
+			fmt.printfln("      - priority queue now: %v", queue.queue)
+			test_dir := Dir(test_dir_idx)
+
+			fmt.printfln(
+				"      - testing going %v from %v to %v",
+				test_dir,
+				cur_cost_node.pos,
+				shift(cur_cost_node.pos, test_dir),
+			)
+
+			test_next_node := PathNode {
+				pos = shift(cur_cost_node.pos, test_dir),
+				dir = test_dir,
+			}
 
 			// if the move in the current dir from the current node is not allowed, check next dir
-			if next_pos, ok = can_move(puz^, nil, cur_node.pos, dir, false); !ok {
+			if _, ok := can_move(puz^, nil, cur_cost_node.pos, test_dir, false); !ok {
+				fmt.printfln("        - can't move")
 				continue
+			} else {
+				fmt.printfln("        - can move!")
 			}
 
 			// get the next node from `cur_node` in direction `dir`
-			next_node_id := hash(next_pos, dir)
-			next_cost := cur_node.cost + 1 + cost_change(d, dir)
+			test_next_cost := cur_cost_node.cost + 1 + cost_change(cur_cost_node.dir, test_dir)
+			fmt.printfln("        - cost of moving %v", test_next_cost)
 
 			// ignore paths with cost too big
-			if next_cost > smallest_cost && cur_node.pos != puz.end {
+			if test_next_cost > smallest_cost && cur_cost_node.pos != puz.end {
+				fmt.printfln(
+					"        - cost > smallest cost (%v) and not at puz end - ignoring path",
+					smallest_cost,
+				)
 				continue
+			} else {
+				fmt.printfln(
+					"        - either next cost %v < current smallest %v, or we're at the end",
+					test_next_cost,
+					smallest_cost,
+				)
 			}
 
 			// is the path we're exploring better than the one we already have here?
-			existing_cost_id := hash(next_pos, d)
-			existing_cost, existing_cost_found := distance[existing_cost_id]
-			pred := Pred {
-				pos = next_pos,
-				dir = d,
-			}
-			if !existing_cost_found || next_cost < existing_cost {
+			// existing_cost_id := hash(test_next_node.pos, test_dir)
+			existing_cost, existing_cost_found := distances_from_start[test_next_node]
+			fmt.printfln(
+				"        - exising cost found: %v - %v",
+				existing_cost_found,
+				existing_cost_found ? util.to_str(existing_cost) : "N/A",
+			)
+
+			if !existing_cost_found || (existing_cost_found && test_next_cost < existing_cost) {
+				fmt.printfln(
+					"        - existing cost not found or found and next cost %v < existing cost %v\n          save in distances_from_start",
+					test_next_cost,
+					existing_cost,
+				)
 				// better path
-				distance[existing_cost_id] = next_cost
-				{
-					pred_list := make_dynamic_array([dynamic]Pred)
-					append(&pred_list, pred)
-					predecessors[existing_cost_id] = pred_list
+				distances_from_start[test_next_node] = test_next_cost
+				if test_next_node in predecessors {
+					append(&predecessors[test_next_node], cur_path_node)
+					fmt.printf("        - added new predecessors map for %v: ", test_next_node)
+				} else {
+					pred_list := make_dynamic_array([dynamic]PathNode)
+					append(&pred_list, cur_path_node)
+					predecessors[test_next_node] = pred_list
+					fmt.printf(
+						"        - added to existing predecessors map for %v: ",
+						test_next_node,
+					)
 				}
-			} else if next_cost > existing_cost {
+				ppreds(predecessors, 8)
+			} else if test_next_cost > existing_cost {
 				continue
 			} else {
 				// same path, just update predecessors
-				if pred_list, pred_list_found := predecessors[existing_cost_id]; pred_list_found {
-					if !slice.contains(pred_list[:], pred) {
-						append(&pred_list, pred)
+				if pred_list, pred_list_found := predecessors[test_next_node]; pred_list_found {
+					if !slice.contains(pred_list[:], cur_path_node) {
+						append(&pred_list, cur_path_node)
 					}
 				}
 			}
 
-			pq.push(&queue, Node{next_pos, dir, next_cost})
+			pq.push(&queue, CostNode{test_next_node.pos, cur_path_node.dir, test_next_cost})
 
 		}
 	}
@@ -247,75 +330,84 @@ find_all_best_paths :: proc(puz: ^Puz) -> (int, [][]Node) {
 		}
 	}
 
+	ppreds(predecessors)
+
 	// now that we have explored the whole pam, create the paths
-	all_shortest_paths := make([dynamic]([dynamic]Pred))
+	all_shortest_paths := make([dynamic]([]PathNode))
 	defer delete_dynamic_array(all_shortest_paths)
 
 	// a stack to keep all the in-progress paths we're building
-	stack := make_dynamic_array([dynamic]Pred)
+	// it's a queue of a tuple of ([]PathNode, T) where T is a tuple of (Point, Dir) 
+	// let mut stack: VecDeque<(Vec<PathNode>, (usize, Direction))> = VecDeque::new();
+	StackNode :: struct {
+		path: [dynamic]PathNode,
+		node: PathNode,
+	}
+	stack := make_dynamic_array([dynamic]StackNode)
 
 	for n in 0 ..< 4 {
+		// loop through all directions
 		dir := Dir(n)
-		node := Pred {
+		end_node := PathNode {
 			pos = puz.end,
 			dir = dir,
 		}
-		if node in distance {
-			append(&stack)
+		end_node_id := hash(end_node.pos, end_node.dir)
+		// find all different distances from the end node to the start
+		if end_node_cost, ok := distances_from_start[end_node]; ok {
+			fmt.printfln(
+				"end node from dir %v has distance/cost of %v",
+				end_node.dir,
+				end_node_cost,
+			)
+			stackNode := StackNode {
+				path = make_dynamic_array([dynamic]PathNode),
+				node = end_node,
+			}
+			append(&stackNode.path, end_node)
+			append(&stack, stackNode)
 		}
 	}
 
-	return 0, nil
+	for len(stack) > 0 {
+		fmt.printfln("stack has %v StackNodes", len(stack))
+		cur_stack_node := pop(&stack)
+		cur_path_node := PathNode {
+			pos = cur_stack_node.node.pos,
+			dir = cur_stack_node.node.dir,
+		}
+		fmt.printfln("cur_stack_node: %v", cur_stack_node)
+
+		if cur_stack_node.node == (PathNode{pos = puz.start, dir = .E}) {
+			// found a complete path, add it to the list of complete paths
+			complete_path := new_clone(cur_stack_node.path, allocator = context.temp_allocator)
+			slice.reverse(complete_path[:])
+			append_elem(&all_shortest_paths, complete_path[:])
+		} else if prev_nodes, ok := predecessors[cur_path_node]; ok {
+			// we got all the predecessors of the current node
+			fmt.printfln(" -> prev nodes: %v", prev_nodes)
+			for prev_node in prev_nodes {
+				// for each predecessor, create a new path and add it to the stack to be checked
+				new_path := new_clone(cur_stack_node.path, allocator = context.temp_allocator)
+				added, err := append_elem(
+					new_path,
+					PathNode{pos = prev_node.pos, dir = prev_node.dir},
+				)
+				if err != nil {
+					fmt.printfln(" -> error on append to new_path: %v", err)
+				}
+
+				added, err = append_elem(&stack, StackNode{path = new_path^, node = prev_node})
+				if err != nil {
+					fmt.printfln(" -> error on append to stack: %v", err)
+				}
+			}
+		}
+	}
+
+	return smallest_cost, all_shortest_paths
 }
 
-/*
-
-
-    // Now that we have explored the whole map, create the paths.
-    // Iterative Backtracking.
-    let mut all_shortest_paths: Vec<Vec<PathNode>> = Vec::new();
-    // A stack to keep all the in-progress paths we are building.
-    let mut stack: VecDeque<(Vec<PathNode>, (usize, Direction))> = VecDeque::new();
-
-    // Initialize the stack with the end position / direction pair.
-    for end_direction in ALL_DIRECTIONS
-        .iter()
-        .filter(|&&d| distance.contains_key(&(end, d)))
-    {
-        stack.push_back((
-            vec![PathNode {
-                pos: end,
-                dir: *end_direction,
-            }],
-            (end, *end_direction),
-        ));
-    }
-
-    while let Some((current_path, current_node)) = stack.pop_back() {
-        if current_node == (start, start_direction) {
-            // A complete path is found, adding it to the list.
-            let mut complete_path = current_path.clone();
-            // Path was build from end, so reverse it.
-            complete_path.reverse();
-            all_shortest_paths.push(complete_path);
-        } else if let Some(prev_nodes) = predecessors.get(&current_node) {
-            // We got all the predecessors of the current node.
-            for &(prev_pos, prev_dir) in prev_nodes {
-                // For each predecessor, we create a new path and add it
-                // to the stack, to be checked.
-                let mut new_path = current_path.clone();
-                new_path.push(PathNode {
-                    pos: prev_pos,
-                    dir: prev_dir,
-                });
-                stack.push_back((new_path, (prev_pos, prev_dir)));
-            }
-        }
-    }
-
-    (smallest_cost, all_shortest_paths)
-}
-*/
 // compute the change in cost incurred by turning from direction `a` to direction `b`
 @(private = "file")
 cost_change :: proc(a: Dir, b: Dir) -> int {
@@ -445,7 +537,7 @@ shift :: #force_inline proc(loc: Point, dir: Dir) -> Point {
 }
 
 @(private = "file")
-node_less_cost :: proc(a, b: Node) -> bool {return a.cost < b.cost}
+node_less_cost :: proc(a, b: CostNode) -> bool {return a.cost < b.cost}
 
 @(private = "file")
-node_swap :: proc(q: []Node, i, j: int) {q[i], q[j] = q[j], q[i]}
+node_swap :: proc(q: []CostNode, i, j: int) {q[i], q[j] = q[j], q[i]}
