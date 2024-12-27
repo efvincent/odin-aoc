@@ -101,6 +101,11 @@ part1 :: proc(grid: ^Grid) -> (int, int) {
 					cost    = c == .Start ? 0 : max(int),
 					visited = false,
 				}
+				if c == .Start {
+					n.cost = 0
+					n.num_preds = 1
+					n.preds[0] = shift(n.pos, .W)
+				}
 				nodes[p] = n
 			}
 		}
@@ -113,49 +118,52 @@ part1 :: proc(grid: ^Grid) -> (int, int) {
 		if pq.len(queue) == 0 do break
 		cur := pq.pop(&queue)
 
-		// consider all unvisited neighbors
+		// consider all unvisited neighbors. 
 		for dir_to_nbr in Dir {
 			// neighbor position
 			nbr_pos := shift(cur.pos, dir_to_nbr)
 			nbr: Node
-			if nbr, ok = nodes[nbr_pos]; ok {
-				// neighbor is an unvisited node
-				// how much would it cost to get there?
-				new_cost := cur.cost + 1 + cost_change(cur.dir, dir_to_nbr)
-				if new_cost == nbr.cost {
-					fmt.printfln(
-						"new cost: %v == nbr cost: %v  num_preds: %v cur (%v,%v) nbr (%v,%v)",
-						new_cost,
-						nbr.cost,
-						nbr.num_preds,
+
+			// I need to know which direction I'm facing, which should be determined by how I arrived here.
+			// I'll either be the starting node, in which case, I'm facing east, or it'll be calculated
+			// from each of my previous positions
+			for idx in 0 ..< cur.num_preds {
+				if nbr, ok = nodes[nbr_pos]; ok {
+					// neighbor is an unvisited node
+					// how much would it cost to get there?
+					new_dir: Dir
+					new_dir, ok = dir_of(cur.preds[idx], cur.pos)
+					if !ok do continue
+					new_cost := cur.cost + 1 + cost_change(new_dir, dir_to_nbr)
+					// new_cost := cur.cost + 1 + cost_change(cur.dir, dir_to_nbr)
+					fmt.printf(
+						"testing (%v,%v)%v -> (%v,%v) new cost:%v, nbr.cost:%v, %v",
 						cur.pos.x,
 						cur.pos.y,
+						cur.cost,
 						nbr.pos.x,
 						nbr.pos.y,
-					)
-					nbr.dir = dir_to_nbr
-					nbr.preds[nbr.num_preds] = cur.pos
-					nbr.num_preds += 1
-					nodes[nbr.pos] = nbr
-					fmt.printfln("changed %v", nodes[nbr.pos])
-					pq.push(&queue, nbr)
-				} else if new_cost < nbr.cost {
-					fmt.printfln(
-						"new cost: %v < nbr cost: %v  num_preds: %v cur (%v,%v) nbr (%v,%v)",
 						new_cost,
 						nbr.cost,
-						nbr.num_preds,
-						cur.pos.x,
-						cur.pos.y,
-						nbr.pos.x,
-						nbr.pos.y,
+						new_dir,
 					)
-					nbr.cost = new_cost
-					nbr.dir = dir_to_nbr
-					nbr.preds[0] = cur.pos
-					nbr.num_preds = 1
-					nodes[nbr.pos] = nbr
-					pq.push(&queue, nbr)
+					if new_cost == nbr.cost {
+						nbr.dir = dir_to_nbr
+						nbr.preds[nbr.num_preds] = cur.pos
+						nbr.num_preds += 1
+						nodes[nbr.pos] = nbr
+						fmt.printf(" ... changed %v", nodes[nbr.pos])
+						pq.push(&queue, nbr)
+					} else if new_cost < nbr.cost {
+						nbr.cost = new_cost
+						nbr.dir = dir_to_nbr
+						nbr.preds[0] = cur.pos
+						nbr.num_preds += 1
+						nodes[nbr.pos] = nbr
+						fmt.printf(" ... queue %v preds %v", nbr.pos, nbr.preds)
+						pq.push(&queue, nbr)
+					}
+					fmt.println()
 				}
 			}
 		}
@@ -173,7 +181,7 @@ part1 :: proc(grid: ^Grid) -> (int, int) {
 		if cur.num_preds == 0 do break
 		for idx in 0 ..< cur.num_preds {
 			cur = nodes[cur.preds[idx]]
-			put(grid, cur.pos, cur.num_preds == 1 ? .Visited : .V2)
+			put(grid, cur.pos, cur.num_preds >= 1 ? .Visited : .V2)
 			path_count[cur.pos] = {}
 		}
 		if cur.pos == grid.end do continue
@@ -183,6 +191,29 @@ part1 :: proc(grid: ^Grid) -> (int, int) {
 }
 
 // -------------------------------------------------------------------------
+
+@(private = "file")
+dir_of :: proc(p2: Point, p1: Point) -> (Dir, bool) {
+	diff := p1 - p2
+	dir: Dir
+	ok := false
+	switch (diff) {
+	case {1, 0}:
+		dir = .E
+		ok = true
+	case {-1, 0}:
+		dir = .W
+		ok = true
+	case {0, 1}:
+		dir = .S
+		ok = true
+	case {0, -1}:
+		dir = .N
+		ok = true
+	}
+	// fmt.printfln("p1:%v, p2:%v, diff:%v -> %v", p1, p2, diff, dir)
+	return dir, ok
+}
 
 @(private = "file")
 parse :: proc(data: string) -> Grid {
