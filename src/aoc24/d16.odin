@@ -25,7 +25,6 @@ Content :: enum {
 	Start   = 'S',
 	End     = 'E',
 	Visited = 'O',
-	V2      = '?',
 }
 
 @(private = "file")
@@ -135,24 +134,11 @@ part1 :: proc(grid: ^Grid) -> (int, int) {
 					new_dir, ok = dir_of(cur.preds[idx], cur.pos)
 					if !ok do continue
 					new_cost := cur.cost + 1 + cost_change(new_dir, dir_to_nbr)
-					// new_cost := cur.cost + 1 + cost_change(cur.dir, dir_to_nbr)
-					fmt.printf(
-						"testing (%v,%v)%v -> (%v,%v) new cost:%v, nbr.cost:%v, %v",
-						cur.pos.x,
-						cur.pos.y,
-						cur.cost,
-						nbr.pos.x,
-						nbr.pos.y,
-						new_cost,
-						nbr.cost,
-						new_dir,
-					)
 					if new_cost == nbr.cost {
 						nbr.dir = dir_to_nbr
 						nbr.preds[nbr.num_preds] = cur.pos
 						nbr.num_preds += 1
 						nodes[nbr.pos] = nbr
-						fmt.printf(" ... changed %v", nodes[nbr.pos])
 						pq.push(&queue, nbr)
 					} else if new_cost < nbr.cost {
 						nbr.cost = new_cost
@@ -160,7 +146,6 @@ part1 :: proc(grid: ^Grid) -> (int, int) {
 						nbr.preds[0] = cur.pos
 						nbr.num_preds += 1
 						nodes[nbr.pos] = nbr
-						fmt.printf(" ... queue %v preds %v", nbr.pos, nbr.preds)
 						pq.push(&queue, nbr)
 					}
 					fmt.println()
@@ -181,7 +166,7 @@ part1 :: proc(grid: ^Grid) -> (int, int) {
 		if cur.num_preds == 0 do break
 		for idx in 0 ..< cur.num_preds {
 			cur = nodes[cur.preds[idx]]
-			put(grid, cur.pos, cur.num_preds >= 1 ? .Visited : .V2)
+			put(grid, cur.pos, .Visited)
 			path_count[cur.pos] = {}
 		}
 		if cur.pos == grid.end do continue
