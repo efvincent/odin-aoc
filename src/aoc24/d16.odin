@@ -11,6 +11,11 @@ import "core:strings"
 Point :: [2]int
 
 @(private = "file")
+// a set of points
+PointSet :: map[Point]struct {}
+
+@(private = "file")
+// possible directions that can be traversed
 Dir :: enum {
 	N = 0,
 	E = 1,
@@ -29,12 +34,11 @@ Content :: enum {
 
 @(private = "file")
 Node :: struct {
-	pos:       Point,
-	dir:       Dir,
-	cost:      int,
-	preds:     [3]Point,
-	num_preds: u8,
-	visited:   bool,
+	pos:     Point,
+	dir:     Dir,
+	cost:    int,
+	pred:    Point,
+	visited: bool,
 }
 
 @(private = "file")
@@ -66,25 +70,87 @@ solve_d16 :: proc(part: util.Part, data: string) -> string {
 
 @(private = "file")
 solve2 :: proc(data: string) -> string {
-	return ""
+	grid := parse(data)
+	defer delete(grid.content)
+	nodes := part1(&grid)
+	target_cost := nodes[grid.end].cost
+	sln_nodes := make(PointSet, allocator = context.temp_allocator)
+	part2(&grid, nodes, &sln_nodes, nodes[grid.start], target_cost)
+	pgrid(grid)
+	return util.to_str(len(sln_nodes))
 }
 
 @(private = "file")
 solve1 :: proc(data: string) -> string {
 	grid := parse(data)
-	pgrid(grid)
 	defer delete(grid.content)
-	p1, p2 := part1(&grid)
+	nodes := part1(&grid)
 	pgrid(grid)
-	fmt.println(p1, p2)
-	return util.to_str(p1)
+	return util.to_str(nodes[grid.end].cost)
 }
 
 // -------------------------------------------------------------------------
 
 @(private = "file")
-part1 :: proc(grid: ^Grid) -> (int, int) {
-	ok: bool
+part2 :: proc(
+	grid: ^Grid,
+	nodes: map[Point]Node,
+	sln_nodes: ^PointSet,
+	cur: Node,
+	target_cost: int,
+) -> bool {
+	part_of_sln_path := false
+	if cur == nodes[grid.end] {
+		// we've reached the end and not exceeded cost!
+		add_point(sln_nodes, cur.pos)
+		return true
+	}
+	for dir_to_nbr in Dir {
+		if nbr, ok := nodes[shift(cur.pos, dir_to_nbr)]; ok && dir_to_nbr != opposite_of(cur.dir) {
+			// does adding its cost to current cost exceed target?
+			new_cost := cur.cost + 1 + cost_change(cur.dir, dir_to_nbr)
+			if new_cost > target_cost {
+				// this branch is invalid
+				return false
+			}
+			// adding this node doesn't blow up target cost
+			nbr.dir = dir_to_nbr
+			nbr.cost = new_cost
+			if part2(grid, nodes, sln_nodes, nbr, target_cost) {
+				// we're part of a solution path!
+				part_of_sln_path = true
+
+				// only add us as part of the path if we're not also the starting point
+				if cur.pos != grid.start do put(grid, cur.pos, .Visited)
+				add_point(sln_nodes, cur.pos)
+			}
+		}
+	}
+	/* 	algo:
+			- starting from the current node
+			- check each of the neighbors -> nbr
+				- does adding it exceed max cost?
+					- no:
+						nbr.dir = dir to nbr
+						nbr.cost = cur cost + cost_change(cur.dir, nbr.dir)
+						- do we find one or more solution paths from this neighbor?
+							-> ifpart2(grid, sln_nodes, nbr, target_cost)
+							- yes:
+								we're part of a solution path (we'll return true)
+								add cur to sln_nodes
+								check next neighbor
+					- yes:
+						this branch is invalid
+						return 0, false
+			- after checking all neighbors
+			- if any of them returned true, then we return true, otherwise we return false
+			- when it's all done, the answer is the length of the PointSet
+	*/
+	return part_of_sln_path
+}
+
+@(private = "file")
+part1 :: proc(grid: ^Grid) -> map[Point]Node {
 	queue: pq.Priority_Queue(Node)
 	pq.init(&queue, node_less_cost, node_swap)
 
@@ -100,11 +166,6 @@ part1 :: proc(grid: ^Grid) -> (int, int) {
 					cost    = c == .Start ? 0 : max(int),
 					visited = false,
 				}
-				if c == .Start {
-					n.cost = 0
-					n.num_preds = 1
-					n.preds[0] = shift(n.pos, .W)
-				}
 				nodes[p] = n
 			}
 		}
@@ -119,36 +180,24 @@ part1 :: proc(grid: ^Grid) -> (int, int) {
 
 		// consider all unvisited neighbors. 
 		for dir_to_nbr in Dir {
-			// neighbor position
+			// neighbor position determined by moving in the dir to neighbor from current position
 			nbr_pos := shift(cur.pos, dir_to_nbr)
-			nbr: Node
+			// get the neighbor node and if it's not yet visited (no loops) then we'll examine it
+			if nbr, ok := nodes[nbr_pos]; ok && !nbr.visited {
+				// how much would it cost to get to this neighbor?
+				new_cost := cur.cost + 1 + cost_change(cur.dir, dir_to_nbr)
 
-			// I need to know which direction I'm facing, which should be determined by how I arrived here.
-			// I'll either be the starting node, in which case, I'm facing east, or it'll be calculated
-			// from each of my previous positions
-			for idx in 0 ..< cur.num_preds {
-				if nbr, ok = nodes[nbr_pos]; ok {
-					// neighbor is an unvisited node
-					// how much would it cost to get there?
-					new_dir: Dir
-					new_dir, ok = dir_of(cur.preds[idx], cur.pos)
-					if !ok do continue
-					new_cost := cur.cost + 1 + cost_change(new_dir, dir_to_nbr)
-					if new_cost == nbr.cost {
-						nbr.dir = dir_to_nbr
-						nbr.preds[nbr.num_preds] = cur.pos
-						nbr.num_preds += 1
-						nodes[nbr.pos] = nbr
-						pq.push(&queue, nbr)
-					} else if new_cost < nbr.cost {
-						nbr.cost = new_cost
-						nbr.dir = dir_to_nbr
-						nbr.preds[0] = cur.pos
-						nbr.num_preds += 1
-						nodes[nbr.pos] = nbr
-						pq.push(&queue, nbr)
-					}
-					fmt.println()
+				// if the new cost is less than the current cost, then we've found a cheaper way
+				// to get to the neighbor. Set the neighbor's new cost and the direction we were
+				// going when we arrived at the neighbor, as well as the predecessor of the neighbor
+				// which is the current node. We also add the node to the set of nodes that make up
+				// the shortest path
+				if new_cost < nbr.cost {
+					nbr.cost = new_cost
+					nbr.dir = dir_to_nbr
+					nbr.pred = cur.pos
+					nodes[nbr.pos] = nbr
+					pq.push(&queue, nbr)
 				}
 			}
 		}
@@ -159,45 +208,37 @@ part1 :: proc(grid: ^Grid) -> (int, int) {
 		nodes[cur.pos] = cur
 	}
 
-	// update grid with visited content by backtracking from the end through the preds
+	// update grid with visited content by backtracking from the end through the preds. This is
+	// only needed for printing the grid
 	cur := nodes[grid.end]
 	path_count := make(map[Point]struct {}, allocator = context.temp_allocator)
 	for {
-		if cur.num_preds == 0 do break
-		for idx in 0 ..< cur.num_preds {
-			cur = nodes[cur.preds[idx]]
-			put(grid, cur.pos, .Visited)
-			path_count[cur.pos] = {}
-		}
+		if cur.pred == {0, 0} do break
+		cur = nodes[cur.pred]
+		put(grid, cur.pos, .Visited)
 		if cur.pos == grid.end do continue
 		if cur.pos == grid.start do break
 	}
-	return nodes[grid.end].cost, len(path_count)
+	return nodes
 }
 
 // -------------------------------------------------------------------------
 
 @(private = "file")
-dir_of :: proc(p2: Point, p1: Point) -> (Dir, bool) {
+dir_of :: proc(p2: Point, p1: Point) -> Dir {
 	diff := p1 - p2
 	dir: Dir
-	ok := false
 	switch (diff) {
 	case {1, 0}:
 		dir = .E
-		ok = true
 	case {-1, 0}:
 		dir = .W
-		ok = true
 	case {0, 1}:
 		dir = .S
-		ok = true
 	case {0, -1}:
 		dir = .N
-		ok = true
 	}
-	// fmt.printfln("p1:%v, p2:%v, diff:%v -> %v", p1, p2, diff, dir)
-	return dir, ok
+	return dir
 }
 
 @(private = "file")
@@ -242,6 +283,21 @@ cost_change :: proc(a: Dir, b: Dir) -> int {
 }
 
 @(private = "file")
+opposite_of :: proc(d: Dir) -> Dir {
+	switch d {
+	case .N:
+		return .S
+	case .S:
+		return .N
+	case .E:
+		return .W
+	case .W:
+		return .E
+	}
+	panic("impossible")
+}
+
+@(private = "file")
 can_move :: proc(
 	grid: Grid,
 	visited: map[int]struct {},
@@ -266,11 +322,14 @@ pgrid :: proc(grid: Grid, visited: map[int]struct {} = nil) {
 			c := rune(get(grid, p))
 			if c == rune(Content.Wall) {
 				fmt.printf("%v%v", c, c)
-			} else if visited != nil && c == rune(Content.Space) && hash(p) in visited {
-				fmt.print(". ")
 			} else {
 				fmt.printf("%v ", c)
 			}
+			// } else if visited != nil && c == rune(Content.Space) && hash(p) in visited {
+			// 	fmt.print(". ")
+			// } else {
+			// 	fmt.printf("%v ", c)
+			// }
 		}
 		fmt.println()
 	}
@@ -334,3 +393,13 @@ node_less_cost :: proc(a, b: Node) -> bool {
 
 @(private = "file")
 node_swap :: proc(q: []Node, i, j: int) {q[i], q[j] = q[j], q[i]}
+
+@(private = "file")
+add_point :: proc(ps: ^PointSet, p: Point) {
+	ps[p] = {}
+}
+
+@(private = "file")
+remove_point :: proc(ps: ^PointSet, p: Point) {
+	delete_key(ps, p)
+}
