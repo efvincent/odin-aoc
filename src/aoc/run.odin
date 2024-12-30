@@ -10,13 +10,7 @@ run :: proc() {
 
 day_16 :: proc() {
 	data := aoc24.D16_PUZ
-	ans1 := aoc24.solve_d16(.p1, data)
-	ans2 := aoc24.solve_d16(.p2, data)
-	defer {
-		delete(ans1)
-		delete(ans2)
-	}
-	// fmt.printfln("Answers to day 16: %v", ans1)
+	ans1, ans2 := aoc24.solve_d16(data)
 	fmt.printfln("Answers to day 16: %v, %v", ans1, ans2)
 }
 

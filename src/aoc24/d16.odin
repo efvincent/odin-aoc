@@ -58,95 +58,105 @@ Puz :: struct {
 	end:   Point,
 }
 
-solve_d16 :: proc(part: util.Part, data: string) -> string {
-	switch part {
-	case .p1:
-		return solve1(data)
-	case .p2:
-		return solve2(data)
-	}
-	return ""
-}
-
-@(private = "file")
-solve2 :: proc(data: string) -> string {
+solve_d16 :: proc(data: string) -> (int, int) {
 	grid := parse(data)
 	defer delete(grid.content)
 	nodes := part1(&grid)
-	target_cost := nodes[grid.end].cost
-	sln_nodes := make(PointSet, allocator = context.temp_allocator)
-	part2(&grid, nodes, &sln_nodes, nodes[grid.start], target_cost)
-	pgrid(grid)
-	return util.to_str(len(sln_nodes))
-}
-
-@(private = "file")
-solve1 :: proc(data: string) -> string {
-	grid := parse(data)
-	defer delete(grid.content)
-	nodes := part1(&grid)
-	pgrid(grid)
-	return util.to_str(nodes[grid.end].cost)
+	result, res := part2(&grid, nodes)
+	defer delete(nodes)
+	// pgrid(grid)
+	fmt.printfln("set size: %v, res: %v", len(result), res)
+	return nodes[grid.end].cost, len(result)
 }
 
 // -------------------------------------------------------------------------
 
 @(private = "file")
-part2 :: proc(
-	grid: ^Grid,
-	nodes: map[Point]Node,
-	sln_nodes: ^PointSet,
-	cur: Node,
-	target_cost: int,
-) -> bool {
-	part_of_sln_path := false
-	if cur == nodes[grid.end] {
-		// we've reached the end and not exceeded cost!
-		add_point(sln_nodes, cur.pos)
-		return true
-	}
-	for dir_to_nbr in Dir {
-		if nbr, ok := nodes[shift(cur.pos, dir_to_nbr)]; ok && dir_to_nbr != opposite_of(cur.dir) {
-			// does adding its cost to current cost exceed target?
-			new_cost := cur.cost + 1 + cost_change(cur.dir, dir_to_nbr)
-			if new_cost > target_cost {
-				// this branch is invalid
-				return false
-			}
-			// adding this node doesn't blow up target cost
-			nbr.dir = dir_to_nbr
-			nbr.cost = new_cost
-			if part2(grid, nodes, sln_nodes, nbr, target_cost) {
-				// we're part of a solution path!
-				part_of_sln_path = true
+part2 :: proc(grid: ^Grid, nodes: map[Point]Node) -> (PointSet, int) {
 
-				// only add us as part of the path if we're not also the starting point
-				if cur.pos != grid.start do put(grid, cur.pos, .Visited)
-				add_point(sln_nodes, cur.pos)
+	Allow :: struct {
+		dir:  Dir,
+		cost: int,
+	}
+	r := 1
+
+	result := make(PointSet, allocator = context.temp_allocator)
+	result[grid.start] = {}
+	result[grid.end] = {}
+
+	queue: pq.Priority_Queue(Node)
+	pq.init(&queue, node_less_cost, node_swap, allocator = context.temp_allocator)
+
+	end_node := nodes[grid.end]
+	/*
+	start_1 = (pos = (1, maxy) ,  dir = (1, 0),  cost = (1, maxy)  )  # x, y, direction, score
+	start_1 = (pos = end ,        dir = S,       cost = end        )  # x, y, direction, score
+
+	start_2 = (pos = (1, maxy) ,  dir = (0, -1), cost = (1, maxy)  )  # x, y, direction, score
+	start_2 = (pos = end ,        dir = E,       cost = end        )  # x, y, direction, score
+*/
+
+	s1 := Node {
+		pos  = end_node.pos,
+		dir  = Dir.S,
+		cost = end_node.cost,
+	}
+
+	s2 := Node {
+		pos  = end_node.pos,
+		dir  = Dir.E,
+		cost = end_node.cost,
+	}
+
+	pq.push(&queue, s1)
+	pq.push(&queue, s2)
+
+	for {
+		if pq.len(queue) == 0 do break
+		cur := pq.pop(&queue)
+		/* allowed = [
+            (cur_dir, cur_score + 1),
+            (turn_left(cur_dir), cur_score + 1001),
+            (turn_right(cur_dir), cur_score + 1001)
+        ] */
+		allowed := [3]Allow {
+			Allow{dir = cur.dir, cost = cur.cost - 1},
+			Allow{dir = right(cur.dir), cost = cur.cost - 1001},
+			Allow{dir = left(cur.dir), cost = cur.cost - 1001},
+		}
+
+		for new in allowed {
+			new_pos := shift(cur.pos, new.dir)
+
+			/* for new_dir, new_score in allowed_directions_n_score:
+            new_x, new_y = cur_x + new_dir[0], cur_y + new_dir[1]
+            if (_map[new_x][new_y] in [new_score, new_score - 1000]) and (new_x, new_y) not in visited:
+                res += 1
+                queue.append((new_x, new_y, new_dir, new_score))
+                visited.add((new_x, new_y)) */
+			candidate, ok := nodes[new_pos]
+			if ok {
+				fmt.printf(
+					"(%v,%v) %v candidate: %v new cost: %v %v \n",
+					new_pos.x,
+					new_pos.y,
+					new.dir,
+					candidate.cost,
+					new.cost,
+					((candidate.cost == new.cost || candidate.cost == new.cost + 1000 || candidate.cost - 1 == new.cost) ? "HIT" : ""),
+				)
+			}
+			if ok && (candidate.cost == new.cost || candidate.cost == new.cost + 1000) { 	//&&
+				//  !(candidate.pos in result) 
+
+				r += 1
+				pq.push(&queue, Node{pos = new_pos, dir = new.dir, cost = new.cost})
+				result[new_pos] = {}
+				put(grid, new_pos, .Visited)
 			}
 		}
 	}
-	/* 	algo:
-			- starting from the current node
-			- check each of the neighbors -> nbr
-				- does adding it exceed max cost?
-					- no:
-						nbr.dir = dir to nbr
-						nbr.cost = cur cost + cost_change(cur.dir, nbr.dir)
-						- do we find one or more solution paths from this neighbor?
-							-> ifpart2(grid, sln_nodes, nbr, target_cost)
-							- yes:
-								we're part of a solution path (we'll return true)
-								add cur to sln_nodes
-								check next neighbor
-					- yes:
-						this branch is invalid
-						return 0, false
-			- after checking all neighbors
-			- if any of them returned true, then we return true, otherwise we return false
-			- when it's all done, the answer is the length of the PointSet
-	*/
-	return part_of_sln_path
+	return result, r
 }
 
 @(private = "file")
@@ -180,12 +190,17 @@ part1 :: proc(grid: ^Grid) -> map[Point]Node {
 
 		// consider all unvisited neighbors. 
 		for dir_to_nbr in Dir {
+
 			// neighbor position determined by moving in the dir to neighbor from current position
 			nbr_pos := shift(cur.pos, dir_to_nbr)
+			// cost change due to change in direction. Delta cost < 0 means invalid change in dir
+			delta_cost := cost_change(cur.dir, dir_to_nbr)
+			if delta_cost < 0 do continue
+
 			// get the neighbor node and if it's not yet visited (no loops) then we'll examine it
 			if nbr, ok := nodes[nbr_pos]; ok && !nbr.visited {
 				// how much would it cost to get to this neighbor?
-				new_cost := cur.cost + 1 + cost_change(cur.dir, dir_to_nbr)
+				new_cost := cur.cost + delta_cost
 
 				// if the new cost is less than the current cost, then we've found a cheaper way
 				// to get to the neighbor. Set the neighbor's new cost and the direction we were
@@ -210,36 +225,49 @@ part1 :: proc(grid: ^Grid) -> map[Point]Node {
 
 	// update grid with visited content by backtracking from the end through the preds. This is
 	// only needed for printing the grid
-	cur := nodes[grid.end]
-	path_count := make(map[Point]struct {}, allocator = context.temp_allocator)
-	for {
-		if cur.pred == {0, 0} do break
-		cur = nodes[cur.pred]
-		put(grid, cur.pos, .Visited)
-		if cur.pos == grid.end do continue
-		if cur.pos == grid.start do break
-	}
+	// cur := nodes[grid.end]
+	// for {
+	// 	if cur.pred == {0, 0} do break
+	// 	cur = nodes[cur.pred]
+	// 	put(grid, cur.pos, .Visited)
+	// 	if cur.pos == grid.end do continue
+	// 	if cur.pos == grid.start do break
+	// }
 	return nodes
 }
 
 // -------------------------------------------------------------------------
 
 @(private = "file")
-dir_of :: proc(p2: Point, p1: Point) -> Dir {
-	diff := p1 - p2
-	dir: Dir
-	switch (diff) {
-	case {1, 0}:
-		dir = .E
-	case {-1, 0}:
-		dir = .W
-	case {0, 1}:
-		dir = .S
-	case {0, -1}:
-		dir = .N
+right :: proc(dir: Dir) -> Dir {
+	switch dir {
+	case .E:
+		return .S
+	case .N:
+		return .E
+	case .W:
+		return .N
+	case .S:
+		return .W
 	}
-	return dir
+	panic("invariant failed")
 }
+
+@(private = "file")
+left :: proc(dir: Dir) -> Dir {
+	switch dir {
+	case .E:
+		return .N
+	case .N:
+		return .W
+	case .W:
+		return .S
+	case .S:
+		return .E
+	}
+	panic("invariant failed")
+}
+
 
 @(private = "file")
 parse :: proc(data: string) -> Grid {
@@ -275,11 +303,11 @@ parse :: proc(data: string) -> Grid {
 cost_change :: proc(a: Dir, b: Dir) -> int {
 	d1 := int(a)
 	d2 := int(b)
-	if d1 == d2 do return 0
+	if d1 == d2 do return 1
 	diff := int(math.abs(d1 - d2))
 	dist := math.min(diff, 4 - diff)
-	if dist == 1 do return 1000
-	return 2000
+	if dist == 1 do return 1001
+	return -1
 }
 
 @(private = "file")
