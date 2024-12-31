@@ -64,7 +64,7 @@ solve_d16 :: proc(data: string) -> (int, int) {
 	nodes := part1(&grid)
 	result, res := part2(&grid, nodes)
 	defer delete(nodes)
-	// pgrid(grid)
+	pgrid(grid)
 	fmt.printfln("set size: %v, res: %v", len(result), res)
 	return nodes[grid.end].cost, len(result)
 }
@@ -74,89 +74,54 @@ solve_d16 :: proc(data: string) -> (int, int) {
 @(private = "file")
 part2 :: proc(grid: ^Grid, nodes: map[Point]Node) -> (PointSet, int) {
 
-	Allow :: struct {
-		dir:  Dir,
-		cost: int,
-	}
-	r := 1
-
 	result := make(PointSet, allocator = context.temp_allocator)
 	result[grid.start] = {}
 	result[grid.end] = {}
+	ncount := 1
 
 	queue: pq.Priority_Queue(Node)
 	pq.init(&queue, node_less_cost, node_swap, allocator = context.temp_allocator)
-
 	end_node := nodes[grid.end]
-	/*
-	start_1 = (pos = (1, maxy) ,  dir = (1, 0),  cost = (1, maxy)  )  # x, y, direction, score
-	start_1 = (pos = end ,        dir = S,       cost = end        )  # x, y, direction, score
-
-	start_2 = (pos = (1, maxy) ,  dir = (0, -1), cost = (1, maxy)  )  # x, y, direction, score
-	start_2 = (pos = end ,        dir = E,       cost = end        )  # x, y, direction, score
-*/
-
-	s1 := Node {
-		pos  = end_node.pos,
-		dir  = Dir.S,
-		cost = end_node.cost,
-	}
-
-	s2 := Node {
-		pos  = end_node.pos,
-		dir  = Dir.E,
-		cost = end_node.cost,
-	}
-
-	pq.push(&queue, s1)
-	pq.push(&queue, s2)
+	pq.push(&queue, end_node)
 
 	for {
+
+		// if the shift from opposite(cur.dir) cost - 1 is a HIT, enqueue with cost - 1
+		// otherwise enqueue with cost - 1001
+
 		if pq.len(queue) == 0 do break
 		cur := pq.pop(&queue)
-		/* allowed = [
-            (cur_dir, cur_score + 1),
-            (turn_left(cur_dir), cur_score + 1001),
-            (turn_right(cur_dir), cur_score + 1001)
-        ] */
-		allowed := [3]Allow {
-			Allow{dir = cur.dir, cost = cur.cost - 1},
-			Allow{dir = right(cur.dir), cost = cur.cost - 1001},
-			Allow{dir = left(cur.dir), cost = cur.cost - 1001},
-		}
+		if cur.pos == grid.start do continue
+		for dir in Dir {
+			candidate, ok := nodes[shift(cur.pos, dir)]
+			allow_cost := dir == opposite_of(cur.dir) ? cur.cost - 1 : cur.cost - 1001
 
-		for new in allowed {
-			new_pos := shift(cur.pos, new.dir)
+			// if candidate.cost == allow_cost || (candidate.cost % 1000) == (allow_cost % 1000) {
+			if candidate.cost == allow_cost || candidate.cost == allow_cost - 1000 {
+				if candidate.cost != allow_cost {
+					fmt.printfln(
+						"mod hit: candidate.cost %v, allow_cost %v",
+						candidate.cost,
+						allow_cost,
+					)
+				}
+				new_cost := dir == opposite_of(cur.dir) ? cur.cost - 1 : cur.cost - 1001
+				if new_cost < 0 do continue
+				new_node := Node {
+					pos  = candidate.pos,
+					cost = allow_cost,
+					dir  = opposite_of(dir),
+				}
+				pq.push(&queue, new_node)
+				put(grid, cur.pos, .Visited)
+				if !(cur.pos in result) do ncount += 1
+				result[cur.pos] = {}
 
-			/* for new_dir, new_score in allowed_directions_n_score:
-            new_x, new_y = cur_x + new_dir[0], cur_y + new_dir[1]
-            if (_map[new_x][new_y] in [new_score, new_score - 1000]) and (new_x, new_y) not in visited:
-                res += 1
-                queue.append((new_x, new_y, new_dir, new_score))
-                visited.add((new_x, new_y)) */
-			candidate, ok := nodes[new_pos]
-			if ok {
-				fmt.printf(
-					"(%v,%v) %v candidate: %v new cost: %v %v \n",
-					new_pos.x,
-					new_pos.y,
-					new.dir,
-					candidate.cost,
-					new.cost,
-					((candidate.cost == new.cost || candidate.cost == new.cost + 1000 || candidate.cost - 1 == new.cost) ? "HIT" : ""),
-				)
-			}
-			if ok && (candidate.cost == new.cost || candidate.cost == new.cost + 1000) { 	//&&
-				//  !(candidate.pos in result) 
-
-				r += 1
-				pq.push(&queue, Node{pos = new_pos, dir = new.dir, cost = new.cost})
-				result[new_pos] = {}
-				put(grid, new_pos, .Visited)
 			}
 		}
 	}
-	return result, r
+
+	return result, ncount
 }
 
 @(private = "file")
@@ -193,6 +158,7 @@ part1 :: proc(grid: ^Grid) -> map[Point]Node {
 
 			// neighbor position determined by moving in the dir to neighbor from current position
 			nbr_pos := shift(cur.pos, dir_to_nbr)
+
 			// cost change due to change in direction. Delta cost < 0 means invalid change in dir
 			delta_cost := cost_change(cur.dir, dir_to_nbr)
 			if delta_cost < 0 do continue
@@ -207,32 +173,29 @@ part1 :: proc(grid: ^Grid) -> map[Point]Node {
 				// going when we arrived at the neighbor, as well as the predecessor of the neighbor
 				// which is the current node. We also add the node to the set of nodes that make up
 				// the shortest path
-				if new_cost < nbr.cost {
-					nbr.cost = new_cost
-					nbr.dir = dir_to_nbr
-					nbr.pred = cur.pos
-					nodes[nbr.pos] = nbr
-					pq.push(&queue, nbr)
+				if new_cost <= nbr.cost {
+					new_nbr := Node {
+						cost    = new_cost,
+						pos     = nbr_pos,
+						dir     = dir_to_nbr,
+						pred    = cur.pos,
+						visited = false,
+					}
+					nodes[nbr_pos] = new_nbr
+					pq.push(&queue, new_nbr)
 				}
 			}
 		}
 
 		// mark current node as visited. it's already removed from the
 		// queue from the pop at the start of the loop
-		cur.visited = true
-		nodes[cur.pos] = cur
+		new_cur := nodes[cur.pos]
+		new_cur.visited = true
+		nodes[cur.pos] = new_cur
 	}
 
-	// update grid with visited content by backtracking from the end through the preds. This is
-	// only needed for printing the grid
-	// cur := nodes[grid.end]
-	// for {
-	// 	if cur.pred == {0, 0} do break
-	// 	cur = nodes[cur.pred]
-	// 	put(grid, cur.pos, .Visited)
-	// 	if cur.pos == grid.end do continue
-	// 	if cur.pos == grid.start do break
-	// }
+	pgrid(grid^)
+	fmt.println("------------------- END PART 1 -------------------")
 	return nodes
 }
 
@@ -343,21 +306,47 @@ can_move :: proc(
 }
 
 @(private = "file")
-pgrid :: proc(grid: Grid, visited: map[int]struct {} = nil) {
+pgrid :: proc(grid: Grid) {
 	for y in 0 ..< grid.max.y {
 		for x in 0 ..< grid.max.x {
 			p := Point{x, y}
 			c := rune(get(grid, p))
-			if c == rune(Content.Wall) {
-				fmt.printf("%v%v", c, c)
+			if c == rune(Content.Space) {
+				fmt.printf("  ")
+			} else if c == rune(Content.Visited) {
+				fmt.printf("O ")
 			} else {
-				fmt.printf("%v ", c)
+				fmt.printf("%v%v", c, c)
 			}
-			// } else if visited != nil && c == rune(Content.Space) && hash(p) in visited {
-			// 	fmt.print(". ")
-			// } else {
-			// 	fmt.printf("%v ", c)
-			// }
+		}
+		fmt.println()
+	}
+	fmt.printfln(
+		"Start: (%v,%v)\nEnd:   (%v,%v)",
+		grid.start.x,
+		grid.start.y,
+		grid.end.x,
+		grid.end.y,
+	)
+}
+
+@(private = "file")
+pgridx :: proc(grid: Grid, nodes: map[Point]Node = nil) {
+	for y in 0 ..< grid.max.y {
+		for x in 0 ..< grid.max.x {
+			p := Point{x, y}
+			c := rune(get(grid, p))
+			if c == rune(Content.Space) {
+				if nodes[p].cost < max(int) {
+					fmt.printf(" %4v ", nodes[p].cost)
+				} else {
+					fmt.printf("  MAX ")
+				}
+			} else if c == rune(Content.Visited) {
+				fmt.printf("*%4v ", nodes[p].cost)
+			} else {
+				fmt.printf("%v%v%v%v%v%v", c, c, c, c, c, c)
+			}
 		}
 		fmt.println()
 	}
