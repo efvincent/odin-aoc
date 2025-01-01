@@ -1,21 +1,17 @@
 package aoc24
 
-import "../util"
 import pq "core:container/priority_queue"
 import "core:fmt"
 import "core:math"
-import "core:slice"
 import "core:strings"
 
 @(private = "file")
 Point :: [2]int
 
 @(private = "file")
-// a set of points
 PointSet :: map[Point]struct {}
 
 @(private = "file")
-// possible directions that can be traversed
 Dir :: enum {
 	N = 0,
 	E = 1,
@@ -93,7 +89,7 @@ part2 :: proc(grid: ^Grid, nodes: map[Point]Node) -> (PointSet, int) {
 		cur := pq.pop(&queue)
 		if cur.pos == grid.start do continue
 		for dir in Dir {
-			candidate, ok := nodes[shift(cur.pos, dir)]
+			candidate := nodes[shift(cur.pos, dir)]
 			allow_cost := dir == opposite_of(cur.dir) ? cur.cost - 1 : cur.cost - 1001
 
 			// if candidate.cost == allow_cost || (candidate.cost % 1000) == (allow_cost % 1000) {
@@ -194,8 +190,6 @@ part1 :: proc(grid: ^Grid) -> map[Point]Node {
 		nodes[cur.pos] = new_cur
 	}
 
-	pgrid(grid^)
-	fmt.println("------------------- END PART 1 -------------------")
 	return nodes
 }
 
@@ -238,7 +232,6 @@ parse :: proc(data: string) -> Grid {
 	raw_lines := strings.split_lines(data, allocator = context.temp_allocator)
 	grid.max.y = len(raw_lines)
 	first := true
-	cost: int
 	for raw_line, y in raw_lines {
 		if first {
 			first = false
