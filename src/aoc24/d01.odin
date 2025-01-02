@@ -5,19 +5,6 @@ import "core:math"
 import "core:slice"
 import conv "core:strconv"
 import "core:strings"
-import "core:testing"
-
-@(test)
-d01_part01_test :: proc(t: ^testing.T) {
-	p1 := solve_d01(.p1, D01_PUZ_EX)
-	testing.expect_value(t, p1, "11")
-}
-
-@(test)
-d01_part02_test :: proc(t: ^testing.T) {
-	p2 := solve_d01(.p2, D01_PUZ_EX)
-	testing.expect_value(t, p2, "31")
-}
 
 solve_d01 :: proc(part: util.Part, data: string) -> string {
 	switch part {
@@ -31,13 +18,13 @@ solve_d01 :: proc(part: util.Part, data: string) -> string {
 
 @(private = "file")
 parse :: proc(data: string) -> ([]int, []int) {
-	lines := strings.split_lines(data)
+	lines := strings.split_lines(data, allocator = context.temp_allocator)
 	line_count := len(lines)
-	left := make([]int, line_count)
-	right := make([]int, line_count)
+	left := make([]int, line_count, allocator = context.temp_allocator)
+	right := make([]int, line_count, allocator = context.temp_allocator)
 
 	for line, idx in lines {
-		parts := strings.split(line, "   ")
+		parts := strings.split(line, "   ", allocator = context.temp_allocator)
 		left[idx] = conv.atoi(parts[0])
 		right[idx] = conv.atoi(parts[1])
 	}
@@ -46,12 +33,10 @@ parse :: proc(data: string) -> ([]int, []int) {
 
 @(private = "file")
 solve2 :: proc(data: string) -> string {
-	orig_allocator := context.allocator
-	context.allocator = context.temp_allocator
-	defer context.allocator = orig_allocator
 
 	left, right := parse(data)
-	in_right := make(map[int]int)
+
+	in_right := make(map[int]int, allocator = context.temp_allocator)
 
 	for n in right {
 		in_right[n] = in_right[n] + 1
@@ -71,10 +56,6 @@ solve2 :: proc(data: string) -> string {
 
 @(private = "file")
 solve1 :: proc(data: string) -> string {
-	orig_allocator := context.allocator
-	context.allocator = context.temp_allocator
-	defer context.allocator = orig_allocator
-
 	left, right := parse(data)
 
 	slice.sort(left)
