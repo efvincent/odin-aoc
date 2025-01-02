@@ -165,7 +165,6 @@ solve2 :: proc(data: string) -> string {
 		if biggest_vert > max_vert && iter > 1000 {
 			max_vert = biggest_vert
 			result = iter
-			ppuz(puz, iter, false)
 		}
 	}
 
@@ -216,11 +215,9 @@ solve1 :: proc(data: string) -> string {
 		robots = robots,
 	}
 	parse(data, &puz)
-	ppuz(puz, 0)
 	for _ in 1 ..= ITERS {
 		tick(&puz)
 	}
-	ppuz(puz, ITERS)
 	quad_counts := count_quads(puz)
 
 	return util.to_str(quad_counts[0] * quad_counts[1] * quad_counts[2] * quad_counts[3])

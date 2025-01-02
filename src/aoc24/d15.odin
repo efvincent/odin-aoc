@@ -76,8 +76,6 @@ solve1 :: proc(data: string) -> string {
 		}
 	}
 
-	ppuz(puz)
-
 	return util.to_str(score)
 }
 
@@ -89,8 +87,6 @@ solve2 :: proc(data: string) -> string {
 		destroy_puz(puz)
 		delete_dynamic_array(commands)
 	}
-
-	ppuz(puz, pdirs = true)
 
 	for dir in puz.dirs {
 		if dir == .N || dir == .S {
@@ -123,7 +119,6 @@ solve2 :: proc(data: string) -> string {
 		}
 	}
 
-	ppuz(puz)
 	return util.to_str(score)
 }
 

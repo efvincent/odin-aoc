@@ -99,8 +99,6 @@ solve1 :: proc(data: string) -> string {
 @(private = "file")
 solve2 :: proc(data: string) -> string {
 	blocks := parse(data)
-	print_blocks(blocks)
-
 	// this is the point at which we start searching for files. File search happens backwards,
 	// starting at the end and scanning towards the beginning. So file search start is initialized
 	// as the last block

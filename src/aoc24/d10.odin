@@ -26,7 +26,6 @@ Direction :: enum (u8) {
 solve_d10 :: proc(part: util.Part, data: string) -> string {
 	distinct_only := part == .p2
 	puz := parse(data)
-	ppuz(&puz)
 	count := 0
 	for th in puz.trailheads {
 		ends := make_map(map[int]bool, allocator = context.temp_allocator)
