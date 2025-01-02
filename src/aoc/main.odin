@@ -1,7 +1,9 @@
 package aoc
 
+import "core:fmt"
 import "core:log"
 import "core:mem"
+import "core:time"
 
 TrackingData :: struct {
 	count: int,
@@ -20,7 +22,7 @@ main :: proc() {
 	orig_logger := context.logger
 
 	// set the context to use these
-	context.allocator = mem.tracking_allocator(&track)
+	//context.allocator = mem.tracking_allocator(&track)
 	context.logger = logger
 
 	defer {
@@ -61,20 +63,14 @@ main :: proc() {
 		context.logger = orig_logger
 		log.destroy_console_logger(console_logger)
 	}
-	// }
 
-	// start_time := time.read_cycle_counter()
+	start := time.now()
 	run()
-	// end_time := time.read_cycle_counter()
-	// elapsed_time := end_time - start_time
-	// freq, ok := time.tsc_frequency()
-	// if ok {
-	// 	elapsed_secs := elapsed_time / freq
-	// 	log.infof("Exec time in seconds/cycles: %v/%v", elapsed_secs, elapsed_time)
-	// } else {
-	// 	log.warnf("Cannot determine tsc frequency")
-	// }
+	end := time.now()
+	elapsed := time.duration_milliseconds(time.diff(start, end))
+	fmt.printfln("Exec time in milli seconds %.3f", elapsed)
 }
+
 
 log_track :: proc(t: mem.Tracking_Allocator) {
 	log.infof(
