@@ -1,24 +1,23 @@
+#+private file
 package aoc24
 
 import "../util"
 import "core:fmt"
 
-@(private = "file")
 Blocks :: #type [dynamic]Block
 
-@(private = "file")
 Block :: struct {
 	file_id:  int,
 	block_id: int,
 }
 
-@(private = "file")
 FileSpec :: struct {
 	file_id:        int,
 	size_in_blocks: int,
 	location:       int,
 }
 
+@(private = "package")
 solve_d09 :: proc(part: util.Part, data: string) -> string {
 	switch part {
 	case .p1:
@@ -29,7 +28,6 @@ solve_d09 :: proc(part: util.Part, data: string) -> string {
 	return ""
 }
 
-@(private = "file")
 parse :: proc(data: string) -> Blocks {
 
 	file_id := 0
@@ -63,12 +61,10 @@ parse :: proc(data: string) -> Blocks {
 	return blocks
 }
 
-@(private = "file")
 fits :: #force_inline proc(file: FileSpec, space: FileSpec) -> bool {
 	return file.size_in_blocks <= space.size_in_blocks
 }
 
-@(private = "file")
 solve1 :: proc(data: string) -> string {
 	blocks := parse(data)
 
@@ -96,7 +92,6 @@ solve1 :: proc(data: string) -> string {
 	return util.to_str(checksum(blocks))
 }
 
-@(private = "file")
 solve2 :: proc(data: string) -> string {
 	blocks := parse(data)
 	// this is the point at which we start searching for files. File search happens backwards,
@@ -166,7 +161,6 @@ solve2 :: proc(data: string) -> string {
 	return util.to_str(checksum(blocks))
 }
 
-@(private = "file")
 move_file :: proc(blocks: ^Blocks, file: FileSpec, space: FileSpec) {
 	id := file.file_id
 	for idx in 0 ..< file.size_in_blocks {
@@ -181,7 +175,6 @@ move_file :: proc(blocks: ^Blocks, file: FileSpec, space: FileSpec) {
 	}
 }
 
-@(private = "file")
 find_next_space :: proc(
 	blocks: Blocks,
 	start_search_idx: int,
@@ -216,7 +209,6 @@ find_next_space :: proc(
 	return spec, false
 }
 
-@(private = "file")
 find_next_file :: proc(blocks: Blocks, start_search_idx: int) -> (spec: FileSpec, ok: bool) {
 
 	// starting at the start_search_idx, proceed toward the first block until we get to the beginning
@@ -254,7 +246,6 @@ find_next_file :: proc(blocks: Blocks, start_search_idx: int) -> (spec: FileSpec
 	return spec, false
 }
 
-@(private = "file")
 checksum :: proc(blocks: Blocks) -> u64 {
 	tot := u64(0)
 	for block in blocks {
@@ -266,7 +257,6 @@ checksum :: proc(blocks: Blocks) -> u64 {
 	return tot
 }
 
-@(private = "file")
 print_blocks :: proc(blocks: Blocks) {
 	for block in blocks {
 		if block.file_id == -1 {

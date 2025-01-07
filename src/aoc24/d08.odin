@@ -1,23 +1,21 @@
+#+private file
 package aoc24
 
 import "../util"
 import "core:math"
 import "core:strings"
 
-@(private = "file")
 Point :: struct {
 	x: int,
 	y: int,
 }
 
-@(private = "file")
 Ant :: struct {
 	id:   int,
 	freq: rune,
 	loc:  Point,
 }
 
-@(private = "file")
 Puz :: struct {
 	ants:      map[int]Ant,
 	antinodes: map[int]bool,
@@ -25,7 +23,6 @@ Puz :: struct {
 	maxy:      int,
 }
 
-@(private = "file")
 init_puz :: proc() -> Puz {
 	return Puz {
 		ants = make_map(map[int]Ant, allocator = context.temp_allocator),
@@ -33,6 +30,7 @@ init_puz :: proc() -> Puz {
 	}
 }
 
+@(private = "package")
 solve_d08 :: proc(part: util.Part, data: string) -> string {
 	puz := parse(data)
 	for _, ant in puz.ants {
@@ -51,7 +49,6 @@ solve_d08 :: proc(part: util.Part, data: string) -> string {
 	}
 }
 
-@(private = "file")
 put :: proc(puz: ^Puz, p: Point) -> bool {
 	if p.x < 0 || p.x > puz.maxx do return false
 	if p.y < 0 || p.y > puz.maxy do return false
@@ -62,12 +59,10 @@ put :: proc(puz: ^Puz, p: Point) -> bool {
 	return true
 }
 
-@(private = "file")
 hash :: proc(p: Point) -> int {
 	return p.y * 1000 + p.x
 }
 
-@(private = "file")
 parse :: proc(data: string) -> Puz {
 
 	raw_lines := strings.split_lines(data, context.temp_allocator)
@@ -92,7 +87,6 @@ parse :: proc(data: string) -> Puz {
 	return puz
 }
 
-@(private = "file")
 scan_ant :: proc(puz: ^Puz, ant: Ant, part: util.Part = .p1) {
 	for _, cur_ant in puz.ants {
 		if cur_ant == ant || cur_ant.freq != ant.freq do continue
@@ -100,7 +94,6 @@ scan_ant :: proc(puz: ^Puz, ant: Ant, part: util.Part = .p1) {
 	}
 }
 
-@(private = "file")
 antinode_of :: proc(puz: ^Puz, p1: Point, p2: Point, part: util.Part = .p1) {
 	x := math.abs(p1.x - p2.x)
 	y := math.abs(p1.y - p2.y)

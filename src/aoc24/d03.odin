@@ -1,8 +1,10 @@
+#+private file
 package aoc24
 
 import "../util"
 import "core:strconv"
 
+@(private = "package")
 solve_d03 :: proc(part: util.Part, data: string) -> string {
 	switch part {
 	case .p1:
@@ -13,7 +15,6 @@ solve_d03 :: proc(part: util.Part, data: string) -> string {
 	return ""
 }
 
-@(private = "file")
 TokenType :: enum {
 	JUNK,
 	MUL,
@@ -26,14 +27,12 @@ TokenType :: enum {
 	EOF,
 }
 
-@(private = "file")
 Token :: struct {
 	type:  TokenType,
 	start: int,
 	len:   int,
 }
 
-@(private = "file")
 Scanner :: struct {
 	orig:  []u8,
 	start: int,
@@ -43,7 +42,6 @@ Scanner :: struct {
 // initialize a scanner from the slice of a rune array. Note that the
 // scanner will maintain it's own slices of the rune array that it
 // doesn't own.
-@(private = "file")
 initScannerFromString :: proc(source: string) -> Scanner {
 	source_slice := transmute([]u8)source
 	scanner := Scanner {
@@ -54,7 +52,6 @@ initScannerFromString :: proc(source: string) -> Scanner {
 	return scanner
 }
 
-@(private = "file")
 interpret :: proc(tkns: []Token, scn: Scanner, use_do_state: bool = false) -> int {
 	// do we have a mul?
 	tot := 0
@@ -82,7 +79,6 @@ interpret :: proc(tkns: []Token, scn: Scanner, use_do_state: bool = false) -> in
 	return tot
 }
 
-@(private = "file")
 check_tokens :: proc(offset: int, tkns: []Token, candidates: []TokenType) -> bool {
 	for candidate, idx in candidates {
 		if idx + offset >= len(tkns) do return false
@@ -91,7 +87,6 @@ check_tokens :: proc(offset: int, tkns: []Token, candidates: []TokenType) -> boo
 	return true
 }
 
-@(private = "file")
 scan :: proc(tkns: ^[dynamic]Token, scn: ^Scanner) -> bool {
 	for {
 		tkn, ok := scan_token(scn)
@@ -102,7 +97,6 @@ scan :: proc(tkns: ^[dynamic]Token, scn: ^Scanner) -> bool {
 	return true
 }
 
-@(private = "file")
 scan_token :: proc(scn: ^Scanner) -> (tkn: Token, ok: bool) {
 	scn.start = scn.cur
 	if isEOF(scn^) do return make_token(scn^, .EOF), true
@@ -132,7 +126,6 @@ scan_token :: proc(scn: ^Scanner) -> (tkn: Token, ok: bool) {
 	return make_token(scn^, .JUNK), true
 }
 
-@(private = "file")
 match :: proc(scn: ^Scanner, expected: string) -> bool {
 	max_expected_idx := len(expected) - 1
 	skip_count := 0
@@ -147,7 +140,6 @@ match :: proc(scn: ^Scanner, expected: string) -> bool {
 // determine if scanner is current pointed at a number. Assumes the first
 // digit has already been read and known to be a digit. For AoC24d3 the numbers
 // can only be 1-3 digits long
-@(private = "file")
 number :: proc(scn: ^Scanner) -> (tkn: Token, ok: bool) {
 	if isEOF(scn^) do return make_token(scn^, .NUM), true
 
@@ -160,7 +152,6 @@ number :: proc(scn: ^Scanner) -> (tkn: Token, ok: bool) {
 	return make_token(scn^, .NUM), true
 }
 
-@(private = "file")
 advance :: proc(scn: ^Scanner, count: int = 1) -> (u8, bool) {
 	if isEOF(scn^, count - 1) {
 		return 0, false
@@ -169,27 +160,22 @@ advance :: proc(scn: ^Scanner, count: int = 1) -> (u8, bool) {
 	return scn.orig[scn.cur - count], true
 }
 
-@(private = "file")
 checkCurrent :: proc(scn: Scanner, predicate: (proc(_: u8) -> bool)) -> bool {
 	return scn.cur <= (len(scn.orig) - 1) && predicate(scn.orig[scn.cur])
 }
 
-@(private = "file")
 isAlpha :: proc(char: u8) -> bool {
 	return char >= 'a' && char <= 'z' || char >= 'A' && char <= 'Z' || char == '\''
 }
 
-@(private = "file")
 isDigit :: proc(char: u8) -> bool {
 	return char >= '0' && char <= '9'
 }
 
-@(private = "file")
 isEOF :: proc(scn: Scanner, extra: int = 0) -> bool {
 	return scn.cur + extra >= len(scn.orig)
 }
 
-@(private = "file")
 make_token :: proc(scn: Scanner, tt: TokenType) -> Token {
 	lex := scn.orig[scn.start:scn.cur]
 	token := Token {
@@ -200,12 +186,10 @@ make_token :: proc(scn: Scanner, tt: TokenType) -> Token {
 	return token
 }
 
-@(private = "file")
 lexeme_of :: proc(token: Token, scanner: Scanner) -> string {
 	return string(scanner.orig[token.start:token.start + token.len])
 }
 
-@(private = "file")
 solve1 :: proc(data: string) -> string {
 	scn := initScannerFromString(data)
 	tkns, _ := make([dynamic]Token, context.temp_allocator)
@@ -215,7 +199,6 @@ solve1 :: proc(data: string) -> string {
 	return util.to_str(ans)
 }
 
-@(private = "file")
 solve2 :: proc(data: string) -> string {
 	scn := initScannerFromString(data)
 	tkns, _ := make([dynamic]Token, context.temp_allocator)

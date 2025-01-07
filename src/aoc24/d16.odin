@@ -1,3 +1,4 @@
+#+private file
 package aoc24
 
 import pq "core:container/priority_queue"
@@ -5,13 +6,10 @@ import "core:fmt"
 import "core:math"
 import "core:strings"
 
-@(private = "file")
 Point :: [2]int
 
-@(private = "file")
 PointSet :: map[Point]struct {}
 
-@(private = "file")
 Dir :: enum {
 	N = 0,
 	E = 1,
@@ -19,7 +17,6 @@ Dir :: enum {
 	W = 3,
 }
 
-@(private = "file")
 Content :: enum {
 	Wall    = '█',
 	Space   = ' ',
@@ -28,7 +25,6 @@ Content :: enum {
 	Visited = 'O',
 }
 
-@(private = "file")
 Node :: struct {
 	pos:     Point,
 	dir:     Dir,
@@ -37,10 +33,8 @@ Node :: struct {
 	visited: bool,
 }
 
-@(private = "file")
 NodeMap :: map[Point]^Node
 
-@(private = "file")
 Grid :: struct {
 	max:     [2]int,
 	content: []Content,
@@ -48,7 +42,6 @@ Grid :: struct {
 	end:     Point,
 }
 
-@(private = "file")
 Puz :: struct {
 	maxx:  int,
 	grid:  []Content,
@@ -57,6 +50,7 @@ Puz :: struct {
 	end:   Point,
 }
 
+@(private = "package")
 solve_d16 :: proc(data: string) -> (int, int) {
 	grid := parse(data)
 	defer delete(grid.content)
@@ -68,7 +62,6 @@ solve_d16 :: proc(data: string) -> (int, int) {
 
 // -------------------------------------------------------------------------
 
-@(private = "file")
 part2 :: proc(grid: ^Grid, nodes: NodeMap) -> PointSet {
 
 	result := make(PointSet, allocator = context.temp_allocator)
@@ -106,7 +99,6 @@ part2 :: proc(grid: ^Grid, nodes: NodeMap) -> PointSet {
 	return result
 }
 
-@(private = "file")
 part1 :: proc(grid: ^Grid) -> NodeMap {
 	queue: pq.Priority_Queue(^Node)
 	pq.init(&queue, node_less_cost, node_swap, capacity = 100, allocator = context.temp_allocator)
@@ -177,7 +169,6 @@ part1 :: proc(grid: ^Grid) -> NodeMap {
 
 // -------------------------------------------------------------------------
 
-@(private = "file")
 right :: proc(dir: Dir) -> Dir {
 	switch dir {
 	case .E:
@@ -192,7 +183,6 @@ right :: proc(dir: Dir) -> Dir {
 	panic("invariant failed")
 }
 
-@(private = "file")
 left :: proc(dir: Dir) -> Dir {
 	switch dir {
 	case .E:
@@ -208,7 +198,6 @@ left :: proc(dir: Dir) -> Dir {
 }
 
 
-@(private = "file")
 parse :: proc(data: string) -> Grid {
 	grid: Grid
 	raw_lines := strings.split_lines(data, allocator = context.temp_allocator)
@@ -237,7 +226,6 @@ parse :: proc(data: string) -> Grid {
 	return grid
 }
 
-@(private = "file")
 cost_change :: proc(a: Dir, b: Dir) -> int {
 	d1 := int(a)
 	d2 := int(b)
@@ -248,7 +236,6 @@ cost_change :: proc(a: Dir, b: Dir) -> int {
 	return -1
 }
 
-@(private = "file")
 opposite_of :: proc(d: Dir) -> Dir {
 	switch d {
 	case .N:
@@ -263,7 +250,6 @@ opposite_of :: proc(d: Dir) -> Dir {
 	panic("impossible")
 }
 
-@(private = "file")
 can_move :: proc(
 	grid: Grid,
 	visited: map[int]struct {},
@@ -280,7 +266,6 @@ can_move :: proc(
 	return loc, false
 }
 
-@(private = "file")
 pgrid :: proc(grid: Grid) {
 	for y in 0 ..< grid.max.y {
 		for x in 0 ..< grid.max.x {
@@ -305,35 +290,29 @@ pgrid :: proc(grid: Grid) {
 	)
 }
 
-@(private = "file")
 inbounds :: #force_inline proc(grid: Grid, loc: Point) -> bool {
 	return !(loc.x < 0 || loc.x >= grid.max.x || loc.y < 0 || loc.y >= grid.max.y)
 }
 
-@(private = "file")
 get :: #force_inline proc(grid: Grid, loc: Point) -> Content {
 	if !inbounds(grid, loc) do return nil
 	return grid.content[loc.y * grid.max.y + loc.x]
 }
 
-@(private = "file")
 put :: #force_inline proc(grid: ^Grid, loc: Point, content: Content) -> bool {
 	if !inbounds(grid^, loc) do return false
 	grid.content[loc.y * grid.max.y + loc.x] = content
 	return true
 }
 
-@(private = "file")
 hash :: proc(loc: Point, dir: Dir = .N) -> int {
 	return int(dir) * 1000000 + loc.y * 1000 + loc.x
 }
 
-@(private = "file")
 destroy_puz :: proc(puz: ^Puz) {
 	delete(puz.grid)
 }
 
-@(private = "file")
 shift :: #force_inline proc(loc: Point, dir: Dir) -> Point {
 	new_loc: Point
 	switch dir {
@@ -349,20 +328,16 @@ shift :: #force_inline proc(loc: Point, dir: Dir) -> Point {
 	return new_loc
 }
 
-@(private = "file")
 node_less_cost :: proc(a, b: ^Node) -> bool {
 	return a.cost < b.cost
 }
 
-@(private = "file")
 node_swap :: proc(q: []^Node, i, j: int) {q[i], q[j] = q[j], q[i]}
 
-@(private = "file")
 add_point :: proc(ps: ^PointSet, p: Point) {
 	ps[p] = {}
 }
 
-@(private = "file")
 remove_point :: proc(ps: ^PointSet, p: Point) {
 	delete_key(ps, p)
 }

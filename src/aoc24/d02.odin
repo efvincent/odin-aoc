@@ -1,3 +1,4 @@
+#+private file
 package aoc24
 
 import "../util"
@@ -7,13 +8,11 @@ import "core:testing"
 
 // this approach uses ~ 9kb statically allocated regardless of
 // puzzle size. This means can only handle max 1000 line puzzles
-@(private = "file")
 Line :: struct {
 	count:   u8,
 	reports: [8]u8,
 }
 
-@(private = "file")
 Lines :: struct {
 	count: int,
 	lines: [1000]Line,
@@ -43,6 +42,7 @@ d02_part02_test :: proc(t: ^testing.T) {
 	testing.expect_value(t, p2, "4")
 }
 
+@(private = "package")
 solve_d02 :: proc(part: util.Part, data: string) -> string {
 	switch part {
 	case .p1:
@@ -53,7 +53,6 @@ solve_d02 :: proc(part: util.Part, data: string) -> string {
 	return ""
 }
 
-@(private = "file")
 parse :: proc(data: string) -> Lines {
 	// use the temp allocator (an arena that will be auto-freed at the end of scope)
 	// for all of the string allocations that will happen when parsing. Reset
@@ -79,7 +78,6 @@ parse :: proc(data: string) -> Lines {
 	return lines
 }
 
-@(private = "file")
 is_line_safe :: proc(line: Line) -> bool {
 	cur := line.reports[0]
 	increasing := cur < line.reports[1]
@@ -92,7 +90,6 @@ is_line_safe :: proc(line: Line) -> bool {
 	return true
 }
 
-@(private = "file")
 is_adjusted_line_safe :: proc(line: Line) -> bool {
 	if is_line_safe(line) do return true
 	adjusted := Line {
@@ -111,7 +108,6 @@ is_adjusted_line_safe :: proc(line: Line) -> bool {
 	return false
 }
 
-@(private = "file")
 solve2 :: proc(data: string) -> string {
 	lines := parse(data)
 	count := 0
@@ -121,7 +117,6 @@ solve2 :: proc(data: string) -> string {
 	return util.to_str(count)
 }
 
-@(private = "file")
 solve1 :: proc(data: string) -> string {
 	lines := parse(data)
 	count := 0

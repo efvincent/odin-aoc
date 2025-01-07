@@ -1,33 +1,29 @@
+#+private file
 package aoc24
 
 import "../util"
 import conv "core:strconv"
 import "core:strings"
 
-@(private = "file")
 Puz :: []u64
 
-@(private = "file")
 SplitResult :: union {
 	SingleStone,
 	TwoStones,
 }
 
-@(private = "file")
 SingleStone :: u64
 
-@(private = "file")
 TwoStones :: [2]u64
 
-@(private = "file")
 ProcessedStoneCacheKey :: struct {
 	stone_num:   u64,
 	blink_count: u64,
 }
 
-@(private = "file")
 stone_processor_cache: map[ProcessedStoneCacheKey]u64
 
+@(private = "package")
 solve_d11 :: proc(part: util.Part, data: string) -> string {
 	switch part {
 	case .p1:
@@ -38,7 +34,6 @@ solve_d11 :: proc(part: util.Part, data: string) -> string {
 	return ""
 }
 
-@(private = "file")
 solve :: proc(data: string, blink_count: u64) -> string {
 	stone_processor_cache = make_map(
 		map[ProcessedStoneCacheKey]u64,
@@ -55,7 +50,6 @@ solve :: proc(data: string, blink_count: u64) -> string {
 	return util.to_str(results)
 }
 
-@(private = "file")
 process_stone :: proc(max_blinks: u64, stone_num: u64, cur_blink: u64) -> u64 {
 	key := ProcessedStoneCacheKey{stone_num, cur_blink}
 	if key in stone_processor_cache {
@@ -76,7 +70,6 @@ process_stone :: proc(max_blinks: u64, stone_num: u64, cur_blink: u64) -> u64 {
 	return results
 }
 
-@(private = "file")
 splitter :: proc(stone_num: u64) -> SplitResult {
 	result: SplitResult
 	stone_num_len := count_digits(stone_num)
@@ -95,7 +88,6 @@ splitter :: proc(stone_num: u64) -> SplitResult {
 	return result
 }
 
-@(private = "file")
 parse :: proc(data: string) -> Puz {
 	puz := make_dynamic_array([dynamic]u64)
 	raw_data := strings.split(data, " ")
@@ -107,7 +99,6 @@ parse :: proc(data: string) -> Puz {
 	return puz[:]
 }
 
-@(private = "file")
 count_digits :: proc(n: u64) -> u64 {
 	return u64(len(util.to_str(n, allocator = context.temp_allocator)))
 }

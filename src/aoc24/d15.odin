@@ -1,13 +1,12 @@
+#+private file
 package aoc24
 
 import "../util"
 import "core:fmt"
 import "core:strings"
 
-@(private = "file")
 Point :: [2]int
 
-@(private = "file")
 Dir :: enum {
 	N = '^',
 	S = 'v',
@@ -15,7 +14,6 @@ Dir :: enum {
 	W = '<',
 }
 
-@(private = "file")
 Content :: enum {
 	Wall     = '#',
 	Space    = '.',
@@ -25,10 +23,8 @@ Content :: enum {
 	BoxRight = ']',
 }
 
-@(private = "file")
 Grid :: [dynamic][dynamic]Content
 
-@(private = "file")
 Puz :: struct {
 	maxx: int,
 	maxy: int,
@@ -37,12 +33,12 @@ Puz :: struct {
 	dirs: [dynamic]Dir,
 }
 
-@(private = "file")
 Command :: struct {
 	loc:   Point,
 	value: Content,
 }
 
+@(private = "package")
 solve_d15 :: proc(part: util.Part, data: string) -> string {
 	switch part {
 	case .p1:
@@ -55,7 +51,6 @@ solve_d15 :: proc(part: util.Part, data: string) -> string {
 
 // -----------------------------------------------------------------------------------------
 
-@(private = "file")
 solve1 :: proc(data: string) -> string {
 	puz := parse(data)
 	defer destroy_puz(puz)
@@ -79,7 +74,6 @@ solve1 :: proc(data: string) -> string {
 	return util.to_str(score)
 }
 
-@(private = "file")
 solve2 :: proc(data: string) -> string {
 	puz := parse(data, .p2)
 	commands := make_dynamic_array([dynamic]Command)
@@ -143,7 +137,6 @@ fixup :: proc(puz: ^Puz) {
 	}
 }
 
-@(private = "file")
 move1 :: proc(puz: ^Puz, loc: Point, dir: Dir) -> (Point, bool) {
 	// can I move?
 	cur := get(puz^, loc)
@@ -165,7 +158,6 @@ move1 :: proc(puz: ^Puz, loc: Point, dir: Dir) -> (Point, bool) {
 	return Point{}, false
 }
 
-@(private = "file")
 move2_NS :: proc(
 	puz: ^Puz,
 	commands: ^[dynamic]Command,
@@ -278,7 +270,6 @@ move2_NS :: proc(
 
 // -----------------------------------------------------------------------------------------
 
-@(private = "file")
 parse :: proc(data: string, part: util.Part = .p1) -> Puz {
 
 	parts := strings.split(data, "\n\n", allocator = context.temp_allocator)
@@ -298,7 +289,6 @@ parse :: proc(data: string, part: util.Part = .p1) -> Puz {
 	return puz
 }
 
-@(private = "file")
 destroy_puz :: proc(puz: Puz) {
 	delete_dynamic_array(puz.dirs)
 	for line in puz.grid {
@@ -307,7 +297,6 @@ destroy_puz :: proc(puz: Puz) {
 	delete_dynamic_array(puz.grid)
 }
 
-@(private = "file")
 parse_grid :: proc(raw_grid: string, part: util.Part = .p1) -> (Grid, Point) {
 	raw_lines := strings.split_lines(raw_grid, allocator = context.temp_allocator)
 	grid := make_dynamic_array([dynamic]([dynamic]Content))
@@ -345,7 +334,6 @@ parse_grid :: proc(raw_grid: string, part: util.Part = .p1) -> (Grid, Point) {
 
 // -----------------------------------------------------------------------------------------
 
-@(private = "file")
 ppuz :: proc(puz: Puz, cmd: rune = ' ', pdirs: bool = false) {
 	fmt.printfln("command: %v", cmd)
 	for line in puz.grid {
@@ -364,18 +352,15 @@ ppuz :: proc(puz: Puz, cmd: rune = ' ', pdirs: bool = false) {
 	fmt.printfln("BOT: %v\n", puz.bot)
 }
 
-@(private = "file")
 inbounds :: #force_inline proc(puz: Puz, loc: Point) -> bool {
 	return !(loc.x < 0 || loc.x > puz.maxx || loc.y < 0 || loc.y > puz.maxy)
 }
 
-@(private = "file")
 get :: #force_inline proc(puz: Puz, loc: Point) -> Content {
 	if !inbounds(puz, loc) do return nil
 	return puz.grid[loc.y][loc.x]
 }
 
-@(private = "file")
 shift :: #force_inline proc(loc: Point, dir: Dir) -> Point {
 	new_loc: Point
 	switch dir {

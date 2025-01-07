@@ -1,3 +1,4 @@
+#+private file
 package aoc24
 
 import "../util"
@@ -5,21 +6,19 @@ import "core:math"
 import "core:strconv"
 import "core:strings"
 
-@(private = "file")
 Button :: enum {
 	A = 0,
 	B = 1,
 }
 
-@(private = "file")
 Axis :: enum {
 	X = 0,
 	Y = 1,
 }
 
-@(private = "file")
 P2_OFFSET: f64 = 10000000000000.0
 
+@(private = "package")
 solve_d13 :: proc(part: util.Part, data: string) -> string {
 
 	// doing everything on the stack this time since it's effectively

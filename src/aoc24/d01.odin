@@ -1,3 +1,4 @@
+#+private file
 package aoc24
 
 import "../util"
@@ -6,6 +7,7 @@ import "core:slice"
 import conv "core:strconv"
 import "core:strings"
 
+@(private = "package")
 solve_d01 :: proc(part: util.Part, data: string) -> string {
 	switch part {
 	case .p1:
@@ -16,7 +18,6 @@ solve_d01 :: proc(part: util.Part, data: string) -> string {
 	return ""
 }
 
-@(private = "file")
 parse :: proc(data: string) -> ([]int, []int) {
 	lines := strings.split_lines(data, allocator = context.temp_allocator)
 	line_count := len(lines)
@@ -31,7 +32,6 @@ parse :: proc(data: string) -> ([]int, []int) {
 	return left, right
 }
 
-@(private = "file")
 solve2 :: proc(data: string) -> string {
 
 	left, right := parse(data)
@@ -54,7 +54,6 @@ solve2 :: proc(data: string) -> string {
 	return util.to_str(tot)
 }
 
-@(private = "file")
 solve1 :: proc(data: string) -> string {
 	left, right := parse(data)
 

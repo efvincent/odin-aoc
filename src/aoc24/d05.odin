@@ -1,9 +1,11 @@
+#+private file
 package aoc24
 
 import "../util"
 import "core:strconv"
 import "core:strings"
 
+@(private = "package")
 solve_d05 :: proc(part: util.Part, data: string) -> string {
 	switch part {
 	case .p1:
@@ -14,13 +16,11 @@ solve_d05 :: proc(part: util.Part, data: string) -> string {
 	return ""
 }
 
-@(private = "file")
 Puz :: struct {
 	rules: map[int][dynamic]int,
 	jobs:  [dynamic][dynamic]int,
 }
 
-@(private = "file")
 parse :: proc(data: string) -> Puz {
 	orig_allocator := context.allocator
 	context.allocator = context.temp_allocator
@@ -61,7 +61,6 @@ parse :: proc(data: string) -> Puz {
 	return puz
 }
 
-@(private = "file")
 solve2 :: proc(data: string) -> string {
 	puz := parse(data)
 	tot := 0
@@ -75,7 +74,6 @@ solve2 :: proc(data: string) -> string {
 	return util.to_str(tot)
 }
 
-@(private = "file")
 fix_job :: proc(puz: ^Puz, job_idx: int) {
 	job := puz.jobs[job_idx]
 	recheck := false
@@ -100,7 +98,6 @@ fix_job :: proc(puz: ^Puz, job_idx: int) {
 	}
 }
 
-@(private = "file")
 is_job_valid :: proc(puz: Puz, job_idx: int) -> bool {
 	job := puz.jobs[job_idx]
 	for page, idx in job {
@@ -117,7 +114,6 @@ is_job_valid :: proc(puz: Puz, job_idx: int) -> bool {
 	return true
 }
 
-@(private = "file")
 solve1 :: proc(data: string) -> string {
 	puz := parse(data)
 	tot := 0

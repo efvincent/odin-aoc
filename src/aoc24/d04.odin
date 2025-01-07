@@ -1,15 +1,16 @@
+#+private file
 package aoc24
 
 import "../util"
 import "core:strings"
 
-@(private = "file")
 Puz :: struct {
 	data: []u8,
 	maxx: int,
 	maxy: int,
 }
 
+@(private = "package")
 solve_d04 :: proc(part: util.Part, data: string) -> string {
 	switch part {
 	case .p1:
@@ -20,7 +21,6 @@ solve_d04 :: proc(part: util.Part, data: string) -> string {
 	return ""
 }
 
-@(private = "file")
 parse :: proc(data: string) -> Puz {
 	orig_allocator := context.allocator
 	context.allocator = context.temp_allocator
@@ -29,14 +29,12 @@ parse :: proc(data: string) -> Puz {
 	return Puz{data = transmute([]u8)data, maxx = span, maxy = (len(data) / span)}
 }
 
-@(private = "file")
 get :: proc(puz: Puz, x: int, y: int) -> u8 {
 	if x < 0 || x >= puz.maxx do return 0
 	if y < 0 || y >= puz.maxx do return 0
 	return puz.data[x + y * puz.maxx + y]
 }
 
-@(private = "file")
 look_for_xmas :: proc(puz: Puz, lookfor: []u8, x, y: int) -> int {
 	xmas_dirs :: [?][]int{{1, 0}, {-1, 0}, {0, 1}, {0, -1}, {1, 1}, {1, -1}, {-1, 1}, {-1, -1}}
 	count := 0
@@ -48,7 +46,6 @@ look_for_xmas :: proc(puz: Puz, lookfor: []u8, x, y: int) -> int {
 	return count
 }
 
-@(private = "file")
 solve1 :: proc(data: string) -> string {
 	puz := parse(data)
 	lookfor := transmute([]u8)string("XMAS")
@@ -63,7 +60,6 @@ solve1 :: proc(data: string) -> string {
 	return util.to_str(total)
 }
 
-@(private = "file")
 has_xmas :: proc(puz: Puz, comp: []u8, x: int, y: int, xdir: int, ydir: int) -> bool {
 	curx := x
 	cury := y
@@ -75,7 +71,6 @@ has_xmas :: proc(puz: Puz, comp: []u8, x: int, y: int, xdir: int, ydir: int) -> 
 	return true
 }
 
-@(private = "file")
 solve2 :: proc(data: string) -> string {
 	puz := parse(data)
 	total := 0
@@ -93,7 +88,6 @@ solve2 :: proc(data: string) -> string {
 	return util.to_str(total)
 }
 
-@(private = "file")
 check_each :: proc(puz: Puz, locations: [][]int, x, y: int) -> bool {
 	loc1, loc2, loc3, loc4: []int
 	for mod in 0 ..= 3 {
@@ -112,7 +106,6 @@ check_each :: proc(puz: Puz, locations: [][]int, x, y: int) -> bool {
 	return false
 }
 
-@(private = "file")
 look_for_x :: proc(puz: Puz, x, y: int) -> bool {
 	TOP_RIGHT :: []int{1, -1}
 	BOT_RIGHT :: []int{1, 1}

@@ -1,10 +1,10 @@
+#+private file
 package aoc24
 
 import "../util"
 import "core:log"
 import "core:strings"
 
-@(private = "file")
 Puz :: struct {
 	data:         []u8,
 	maxx:         int,
@@ -14,13 +14,11 @@ Puz :: struct {
 	cur_dir:      Direction,
 }
 
-@(private = "file")
 Point :: struct {
 	x: int,
 	y: int,
 }
 
-@(private = "file")
 Direction :: enum {
 	N = 0,
 	E = 1,
@@ -28,7 +26,6 @@ Direction :: enum {
 	W = 3,
 }
 
-@(private = "file")
 dir_of :: proc(symbol: u8) -> Direction {
 	switch symbol {
 	case '^':
@@ -44,10 +41,8 @@ dir_of :: proc(symbol: u8) -> Direction {
 	}
 }
 
-@(private = "file")
 moves := []Point{Point{0, -1}, Point{1, 0}, Point{0, 1}, Point{-1, 0}}
 
-@(private = "file")
 move :: proc(puz: Puz, point: Point, dir: Direction) -> (new_point: Point, value: u8) {
 	new_point = Point {
 		x = point.x + moves[dir].x,
@@ -57,14 +52,12 @@ move :: proc(puz: Puz, point: Point, dir: Direction) -> (new_point: Point, value
 	return new_point, value
 }
 
-@(private = "file")
 get :: proc(puz: Puz, p: Point) -> u8 {
 	if p.x < 0 || p.x >= puz.maxx do return 0
 	if p.y < 0 || p.y >= puz.maxx do return 0
 	return puz.data[p.x + p.y * puz.maxx + p.y]
 }
 
-@(private = "file")
 put :: proc(puz: ^Puz, p: Point, value: u8) {
 	if p.x < 0 || p.x >= puz.maxx do return
 	if p.y < 0 || p.y >= puz.maxx do return
@@ -72,6 +65,7 @@ put :: proc(puz: ^Puz, p: Point, value: u8) {
 	puz.data[idx] = value
 }
 
+@(private = "package")
 solve_d06 :: proc(part: util.Part, data: string) -> string {
 	switch part {
 	case .p1:
@@ -82,7 +76,6 @@ solve_d06 :: proc(part: util.Part, data: string) -> string {
 	return ""
 }
 
-@(private = "file")
 parse :: proc(data: ^string) -> Puz {
 	orig_allocator := context.allocator
 	context.allocator = context.temp_allocator
@@ -110,7 +103,6 @@ parse :: proc(data: ^string) -> Puz {
 	return Puz{}
 }
 
-@(private = "file")
 solve2 :: proc(data: string) -> string {
 	modifyable_data := strings.clone(data, allocator = context.temp_allocator)
 	puz := parse(&modifyable_data)
@@ -158,7 +150,6 @@ turn_right :: proc(d: Direction) -> Direction {
 	return Direction((int(d) + 1) % 4)
 }
 
-@(private = "file")
 solve1 :: proc(data: string) -> string {
 	modifyable_data := strings.clone(data, allocator = context.temp_allocator)
 	puz := parse(&modifyable_data)
@@ -166,12 +157,10 @@ solve1 :: proc(data: string) -> string {
 	return util.to_str(steps)
 }
 
-@(private = "file")
 hash :: proc(p: Point) -> int {
 	return p.x * 1000 + p.y
 }
 
-@(private = "file")
 walk_route :: proc(puz: ^Puz, i: int = -1, shortcut_loops: bool = true) -> int {
 
 	steps := 1

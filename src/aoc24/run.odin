@@ -1,11 +1,9 @@
-package aoc
+package aoc24
 
-import "../aoc24"
 import "core:fmt"
 
 run :: proc() {
-	// day_16()
-	all_days()
+	day_14()
 	free_all(context.temp_allocator)
 }
 
@@ -28,15 +26,15 @@ all_days :: proc() {
 }
 
 day_16 :: proc() {
-	data := aoc24.D16_PUZ
-	ans1, ans2 := aoc24.solve_d16(data)
+	data := D16_PUZ
+	ans1, ans2 := solve_d16(data)
 	fmt.printfln("Answers to day 16: %v, %v", ans1, ans2)
 }
 
 day_15 :: proc() {
-	data := aoc24.D15_PUZ
-	ans1 := aoc24.solve_d15(.p1, data)
-	ans2 := aoc24.solve_d15(.p2, data)
+	data := D15_PUZ
+	ans1 := solve_d15(.p1, data)
+	ans2 := solve_d15(.p2, data)
 	defer {
 		delete(ans1)
 		delete(ans2)
@@ -45,20 +43,21 @@ day_15 :: proc() {
 }
 
 day_14 :: proc() {
-	data := aoc24.D14_PUZ
-	ans1 := aoc24.solve_d14(.p1, data)
-	ans2 := aoc24.solve_d14(.p2, data)
+	data := D14_PUZ
+	// ans1 := solve_d14(.p1, data)
+	ans2 := solve_d14(.p2, data)
 	defer {
-		delete(ans1)
+		// delete(ans1)
 		delete(ans2)
 	}
-	fmt.printfln("Answers to day 14: %v, %v", ans1, ans2)
+	fmt.printfln("Answers to day 14: %v", ans2)
+	// fmt.printfln("Answers to day 14: %v, %v", ans1, ans2)
 }
 
 day_13 :: proc() {
-	data := aoc24.D13_PUZ
-	ans1 := aoc24.solve_d13(.p1, data)
-	ans2 := aoc24.solve_d13(.p2, data)
+	data := D13_PUZ
+	ans1 := solve_d13(.p1, data)
+	ans2 := solve_d13(.p2, data)
 	defer {
 		delete(ans1)
 		delete(ans2)
@@ -67,9 +66,9 @@ day_13 :: proc() {
 }
 
 day_12 :: proc() {
-	data := aoc24.D12_PUZ
-	ans1 := aoc24.solve_d12(.p1, data)
-	ans2 := aoc24.solve_d12(.p2, data)
+	data := D12_PUZ
+	ans1 := solve_d12(.p1, data)
+	ans2 := solve_d12(.p2, data)
 	defer {
 		delete(ans1)
 		delete(ans2)
@@ -78,9 +77,9 @@ day_12 :: proc() {
 }
 
 day_11 :: proc() {
-	data := aoc24.D11_PUZ
-	ans1 := aoc24.solve_d11(.p1, data)
-	ans2 := aoc24.solve_d11(.p2, data)
+	data := D11_PUZ
+	ans1 := solve_d11(.p1, data)
+	ans2 := solve_d11(.p2, data)
 	defer {
 		delete(ans1)
 		delete(ans2)
@@ -89,9 +88,9 @@ day_11 :: proc() {
 }
 
 day_10 :: proc() {
-	data := aoc24.D10_PUZ
-	ans1 := aoc24.solve_d10(.p1, data)
-	ans2 := aoc24.solve_d10(.p2, data)
+	data := D10_PUZ
+	ans1 := solve_d10(.p1, data)
+	ans2 := solve_d10(.p2, data)
 	defer {
 		delete(ans1)
 		delete(ans2)
@@ -100,9 +99,9 @@ day_10 :: proc() {
 }
 
 day_09 :: proc() {
-	data := aoc24.D09_PUZ
-	ans1 := aoc24.solve_d09(.p1, data)
-	ans2 := aoc24.solve_d09(.p2, data)
+	data := D09_PUZ
+	ans1 := solve_d09(.p1, data)
+	ans2 := solve_d09(.p2, data)
 	defer {
 		delete(ans1)
 		delete(ans2)
@@ -111,9 +110,9 @@ day_09 :: proc() {
 }
 
 day_08 :: proc() {
-	data := aoc24.D08_PUZ
-	ans1 := aoc24.solve_d08(.p1, data)
-	ans2 := aoc24.solve_d08(.p2, data)
+	data := D08_PUZ
+	ans1 := solve_d08(.p1, data)
+	ans2 := solve_d08(.p2, data)
 	defer {
 		delete(ans1)
 		delete(ans2)
@@ -122,9 +121,9 @@ day_08 :: proc() {
 }
 
 day_07 :: proc() {
-	data := aoc24.D07_PUZ
-	ans1 := aoc24.solve_d07(.p1, data)
-	ans2 := aoc24.solve_d07(.p2, data)
+	data := D07_PUZ
+	ans1 := solve_d07(.p1, data)
+	ans2 := solve_d07(.p2, data)
 	defer {
 		delete(ans1)
 		delete(ans2)
@@ -133,9 +132,9 @@ day_07 :: proc() {
 }
 
 day_06 :: proc() {
-	data := aoc24.D06_PUZ
-	ans1 := aoc24.solve_d06(.p1, data)
-	ans2 := aoc24.solve_d06(.p2, data)
+	data := D06_PUZ
+	ans1 := solve_d06(.p1, data)
+	ans2 := solve_d06(.p2, data)
 	defer {
 		delete(ans1)
 		delete(ans2)
@@ -144,9 +143,9 @@ day_06 :: proc() {
 }
 
 day_05 :: proc() {
-	data := aoc24.D05_PUZ
-	ans1 := aoc24.solve_d05(.p1, data)
-	ans2 := aoc24.solve_d05(.p2, data)
+	data := D05_PUZ
+	ans1 := solve_d05(.p1, data)
+	ans2 := solve_d05(.p2, data)
 	defer {
 		delete(ans1)
 		delete(ans2)
@@ -155,9 +154,9 @@ day_05 :: proc() {
 }
 
 day_04 :: proc() {
-	data := aoc24.D04_PUZ
-	ans1 := aoc24.solve_d04(.p1, data)
-	ans2 := aoc24.solve_d04(.p2, data)
+	data := D04_PUZ
+	ans1 := solve_d04(.p1, data)
+	ans2 := solve_d04(.p2, data)
 	defer {
 		delete(ans1)
 		delete(ans2)
@@ -166,10 +165,10 @@ day_04 :: proc() {
 }
 
 day_01 :: proc() {
-	data := aoc24.D01_PUZ
+	data := D01_PUZ
 
-	ans1 := aoc24.solve_d01(.p1, data)
-	ans2 := aoc24.solve_d01(.p2, data)
+	ans1 := solve_d01(.p1, data)
+	ans2 := solve_d01(.p2, data)
 	defer {
 		delete(ans1)
 		delete(ans2)
@@ -178,10 +177,10 @@ day_01 :: proc() {
 }
 
 day_02 :: proc() {
-	data := aoc24.D02_PUZ
+	data := D02_PUZ
 
-	ans1 := aoc24.solve_d02(.p1, data)
-	ans2 := aoc24.solve_d02(.p2, data)
+	ans1 := solve_d02(.p1, data)
+	ans2 := solve_d02(.p2, data)
 	defer {
 		delete(ans1)
 		delete(ans2)
@@ -191,9 +190,9 @@ day_02 :: proc() {
 }
 
 day_03 :: proc() {
-	data := aoc24.D03_PUZ
-	ans1 := aoc24.solve_d03(.p1, data)
-	ans2 := aoc24.solve_d03(.p2, data)
+	data := D03_PUZ
+	ans1 := solve_d03(.p1, data)
+	ans2 := solve_d03(.p2, data)
 	defer {
 		delete(ans1)
 		delete(ans2)

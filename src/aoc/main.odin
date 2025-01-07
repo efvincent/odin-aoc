@@ -1,5 +1,6 @@
 package aoc
 
+import "../aoc24"
 import "core:fmt"
 import "core:log"
 import "core:mem"
@@ -65,7 +66,7 @@ main :: proc() {
 	}
 
 	start := time.now()
-	run()
+	aoc24.run()
 	end := time.now()
 	elapsed := time.duration_milliseconds(time.diff(start, end))
 	fmt.printfln("Exec time in milli seconds %.3f", elapsed)

@@ -1,3 +1,4 @@
+#+private file
 package aoc24
 
 import "../util"
@@ -10,6 +11,7 @@ Puz :: struct {
 
 }
 
+@(private = "package")
 solve_dxx :: proc(part: util.Part, data: string) -> string {
 	switch part {
 	case .p1:
@@ -20,7 +22,6 @@ solve_dxx :: proc(part: util.Part, data: string) -> string {
 	return ""
 }
 
-@(private = "file")
 parse :: proc(data: string) -> Puz {
 	raw_lines := strings.split_lines(data)
 	puz:Puz
@@ -28,12 +29,10 @@ parse :: proc(data: string) -> Puz {
 	return puz
 }
 
-@(private = "file")
 solve2 :: proc(data: string) -> string {
 	return ""
 }
 
-@(private = "file")
 solve1 :: proc(data: string) -> string {
 	return ""
 }

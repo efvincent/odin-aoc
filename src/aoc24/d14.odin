@@ -1,3 +1,4 @@
+#+private file
 package aoc24
 
 import "../util"
@@ -7,19 +8,14 @@ import conv "core:strconv"
 import "core:strings"
 import rx "core:text/regex"
 
-
-@(private = "file")
 Point :: [2]int
 Vec2 :: [2]int
 
-
-@(private = "file")
 Robot :: struct {
 	pos: Point,
 	vel: Vec2,
 }
 
-@(private = "file")
 Puz :: struct {
 	robots: [dynamic]Robot,
 	data:   []u8,
@@ -27,6 +23,7 @@ Puz :: struct {
 	maxy:   int,
 }
 
+@(private = "package")
 solve_d14 :: proc(part: util.Part, data: string) -> string {
 	switch part {
 	case .p1:
@@ -37,7 +34,6 @@ solve_d14 :: proc(part: util.Part, data: string) -> string {
 	return ""
 }
 
-@(private = "file")
 mk_robot :: proc(input: string) -> Robot {
 	re, _ := rx.create(
 		`p=(-?\d+),(-?\d+) v=(-?\d+),(-?\d+)`,
@@ -53,7 +49,6 @@ mk_robot :: proc(input: string) -> Robot {
 	return Robot{{p1, p2}, {v1, v2}}
 }
 
-@(private = "file")
 tick :: proc(puz: ^Puz) {
 	wrap_point :: proc(p: ^Point, puz: Puz) {
 		if p.x < 0 {
@@ -74,7 +69,6 @@ tick :: proc(puz: ^Puz) {
 	}
 }
 
-@(private = "file")
 count_quads :: proc(puz: Puz) -> (quad_counts: [4]int) {
 	for y in 0 ..< puz.maxy {
 		for x in 0 ..< puz.maxx {
@@ -89,7 +83,6 @@ count_quads :: proc(puz: Puz) -> (quad_counts: [4]int) {
 	return quad_counts
 }
 
-@(private = "file")
 ppuz :: proc(puz: Puz, iter: int, quads: bool = true) {
 	fmt.println("\nIteration", iter)
 	for y in 0 ..< puz.maxy {
@@ -112,7 +105,6 @@ ppuz :: proc(puz: Puz, iter: int, quads: bool = true) {
 	}
 }
 
-@(private = "file")
 quad_of :: proc(puz: Puz, p: Point) -> int {
 	mx := puz.maxx / 2
 	my := puz.maxy / 2
@@ -126,7 +118,6 @@ quad_of :: proc(puz: Puz, p: Point) -> int {
 	return -1
 }
 
-@(private = "file")
 parse :: proc(data: string, puz: ^Puz) {
 	raw_lines := strings.split_lines(data, allocator = context.temp_allocator)
 	if len(raw_lines) <= 12 {
@@ -143,7 +134,6 @@ parse :: proc(data: string, puz: ^Puz) {
 	return
 }
 
-@(private = "file")
 solve2 :: proc(data: string) -> string {
 	MAX_ITERS :: 10000
 	result := 0
@@ -171,7 +161,6 @@ solve2 :: proc(data: string) -> string {
 	return util.to_str(result)
 }
 
-@(private = "file")
 biggest_vertical :: proc(puz: Puz, x: int) -> int {
 	biggest := 0
 	cur_line := 0
@@ -207,7 +196,6 @@ biggest_vertical :: proc(puz: Puz, x: int) -> int {
 	return biggest
 }
 
-@(private = "file")
 solve1 :: proc(data: string) -> string {
 	ITERS :: 100
 	robots := make_dynamic_array([dynamic]Robot, allocator = context.temp_allocator)

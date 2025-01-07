@@ -1,21 +1,21 @@
+#+private file
 package aoc24
 
 import "../util"
 import "core:strconv"
 import "core:strings"
 
-@(private = "file")
 Puz :: struct {
 	answers:    []u128,
 	term_lists: [][]u128,
 }
 
-@(private = "file")
 Operator :: enum {
 	PLUS,
 	TIMES,
 }
 
+@(private = "package")
 solve_d07 :: proc(part: util.Part, data: string) -> string {
 	switch part {
 	case .p1:
@@ -26,7 +26,6 @@ solve_d07 :: proc(part: util.Part, data: string) -> string {
 	return ""
 }
 
-@(private = "file")
 parse :: proc(data: string) -> Puz {
 	raw_lines := strings.split_lines(data, context.temp_allocator)
 
@@ -49,7 +48,6 @@ parse :: proc(data: string) -> Puz {
 	return puz
 }
 
-@(private = "file")
 solve :: proc(data: string, check_concat: bool) -> string {
 	puz := parse(data)
 	defer {
@@ -67,7 +65,6 @@ solve :: proc(data: string, check_concat: bool) -> string {
 	return util.to_str(total)
 }
 
-@(private = "file")
 has_solution :: proc(
 	expected: u128,
 	terms: []u128,
