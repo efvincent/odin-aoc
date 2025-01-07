@@ -14,56 +14,56 @@ TrackingData :: struct {
 main :: proc() {
 	// when ODIN_DEBUG {
 	// set up the tracking allocator
-	track: mem.Tracking_Allocator
-	mem.tracking_allocator_init(&track, context.allocator)
-	orig_allocator := context.allocator
+	// track: mem.Tracking_Allocator
+	// mem.tracking_allocator_init(&track, context.allocator)
+	// orig_allocator := context.allocator
 
-	// and the console logger
-	logger := log.create_console_logger()
-	orig_logger := context.logger
+	// // and the console logger
+	// logger := log.create_console_logger()
+	// orig_logger := context.logger
 
-	// set the context to use these
-	//context.allocator = mem.tracking_allocator(&track)
-	context.logger = logger
+	// // set the context to use these
+	// //context.allocator = mem.tracking_allocator(&track)
+	// context.logger = logger
 
-	defer {
-		log_track(track)
-		if len(track.allocation_map) > 0 {
-			m := make(map[string]TrackingData)
-			defer delete(m)
-			log.warnf("%v allocations not freed", len(track.allocation_map))
-			for _, entry in track.allocation_map {
+	// defer {
+	// 	log_track(track)
+	// 	if len(track.allocation_map) > 0 {
+	// 		m := make(map[string]TrackingData)
+	// 		defer delete(m)
+	// 		log.warnf("%v allocations not freed", len(track.allocation_map))
+	// 		for _, entry in track.allocation_map {
 
-				key := entry.location.procedure
-				data, found := m[key]
-				if found {
-					data.count += 1
-					data.size += entry.size
-					m[key] = data
-				} else {
-					m[key] = {1, entry.size}
-				}
-			}
-			for k, v in m {
-				log.warnf("%v allocs, %v bytes not freed: at '%v'", v.count, v.size, k)
-			}
-		}
-		if len(track.bad_free_array) > 0 {
-			m := make(map[string]TrackingData)
-			defer delete(m)
-			log.warnf("%v incorrect frees", len(track.bad_free_array))
-			for entry in track.bad_free_array {
-				log.warnf("at: %v", entry.location)
-			}
-		}
+	// 			key := entry.location.procedure
+	// 			data, found := m[key]
+	// 			if found {
+	// 				data.count += 1
+	// 				data.size += entry.size
+	// 				m[key] = data
+	// 			} else {
+	// 				m[key] = {1, entry.size}
+	// 			}
+	// 		}
+	// 		for k, v in m {
+	// 			log.warnf("%v allocs, %v bytes not freed: at '%v'", v.count, v.size, k)
+	// 		}
+	// 	}
+	// 	if len(track.bad_free_array) > 0 {
+	// 		m := make(map[string]TrackingData)
+	// 		defer delete(m)
+	// 		log.warnf("%v incorrect frees", len(track.bad_free_array))
+	// 		for entry in track.bad_free_array {
+	// 			log.warnf("at: %v", entry.location)
+	// 		}
+	// 	}
 
-		context.allocator = orig_allocator
-		mem.tracking_allocator_destroy(&track)
+	// 	context.allocator = orig_allocator
+	// 	mem.tracking_allocator_destroy(&track)
 
-		console_logger := context.logger
-		context.logger = orig_logger
-		log.destroy_console_logger(console_logger)
-	}
+	// 	console_logger := context.logger
+	// 	context.logger = orig_logger
+	// 	log.destroy_console_logger(console_logger)
+	// }
 
 	start := time.now()
 	aoc24.run()
